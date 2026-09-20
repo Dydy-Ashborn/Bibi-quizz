@@ -1,0 +1,75 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function game(id) { return get(/databases/$(database)/documents/games/$(id)).data; }
+    function isHost(id) { return signedIn() && game(id).hostUid == request.auth.uid; }
+    function member(id) {
+      return signedIn() && exists(/databases/$(database)/documents/games/$(id)/players/$(request.auth.uid));
+    }
+    function premium() {
+      return signedIn() && exists(/databases/$(database)/documents/hosts/$(request.auth.uid))
+        && get(/databases/$(database)/documents/hosts/$(request.auth.uid)).data.premium == true;
+    }
+    match /games/{id} {
+      allow get: if signedIn();
+      allow list: if false;
+      allow create: if signedIn() && request.resource.data.hostUid == request.auth.uid
+        && request.resource.data.code == id && id.matches('[A-Z0-9]{5}')
+        && request.resource.data.status == 'lobby' && request.resource.data.members == []
+        && request.resource.data.format in ['emission','soiree','marathon']
+        && request.resource.data.ton in ['mix','classique','moderne']
+        && request.resource.data.reponses in ['oral','clavier']
+        && request.resource.data.maxJoueurs in [4,8]
+        && (premium() || (request.resource.data.maxJoueurs == 4 && request.resource.data.format == 'emission' && request.resource.data.ton == 'mix'));
+      allow update: if signedIn() && (
+        (resource.data.hostUid == request.auth.uid
+          && request.resource.data.hostUid == resource.data.hostUid
+          && request.resource.data.maxJoueurs == resource.data.maxJoueurs
+          && request.resource.data.format == resource.data.format)
+        || (resource.data.status in ['lobby','live']
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members'])
+          && !(request.auth.uid in resource.data.members)
+          && request.resource.data.members == resource.data.members.concat([request.auth.uid])
+          && request.resource.data.members.size() <= resource.data.maxJoueurs
+          && existsAfter(/databases/$(database)/documents/games/$(id)/players/$(request.auth.uid)))
+      );
+      allow delete: if signedIn() && resource.data.hostUid == request.auth.uid;
+      match /players/{playerId} {
+        allow read: if signedIn();
+        allow create, update: if signedIn() && request.auth.uid == playerId
+          && game(id).status in ['lobby','live']
+          && playerId in getAfter(/databases/$(database)/documents/games/$(id)).data.members
+          && request.resource.data.keys().hasOnly(['name','color','son','joinedAt'])
+          && request.resource.data.name is string
+          && request.resource.data.name.size() >= 2 && request.resource.data.name.size() <= 16
+          && request.resource.data.color in ['#ffb020','#3fb6ff','#ff5f7e','#57e38a','#c38bff','#ff8a3d','#40e0d0','#f5e663']
+          && request.resource.data.son in ['classique','laser','klaxon','arcade','cloche','boing']
+          && request.resource.data.joinedAt == request.time;
+        allow delete: if isHost(id);
+      }
+      match /buzz/{playerId} {
+        allow read: if member(id) || isHost(id);
+        allow create, update: if member(id) && request.auth.uid == playerId
+          && request.resource.data.keys().hasOnly(['seq','tour','at'])
+          && request.resource.data.seq is int && request.resource.data.tour is int
+          && request.resource.data.at == request.time;
+        allow delete: if isHost(id);
+      }
+      match /inputs/{playerId} {
+        allow read: if signedIn() && (request.auth.uid == playerId || isHost(id));
+        allow create, update: if member(id) && request.auth.uid == playerId
+          && request.resource.data.keys().hasOnly(['seq','tour','kind','value','at'])
+          && request.resource.data.seq is int && request.resource.data.tour is int
+          && request.resource.data.kind in ['reponse','theme','main','prono']
+          && request.resource.data.value is string && request.resource.data.value.size() <= 80
+          && request.resource.data.at == request.time;
+        allow delete: if isHost(id);
+      }
+    }
+    match /hosts/{hostId} {
+      allow read: if signedIn() && request.auth.uid == hostId;
+      allow write: if false;
+    }
+  }
+}

@@ -1,0 +1,72 @@
+/* Font Awesome Free 6.7.2 — sous-ensemble vendorisé (64 icônes réellement utilisées).
+ * Icônes CC BY 4.0 · Police SIL OFL 1.1 · Code MIT — https://fontawesome.com
+ * Vendorisé plutôt que chargé depuis un CDN : c'est une PWA, les icônes doivent
+ * survivre au mode hors-ligne. Le fichier ne contient que les glyphes listés
+ * ci-dessous — ajouter une icône demande de régénérer le sous-ensemble
+ * (pyftsubset sur fa-solid-900.ttf), pas seulement une ligne de CSS. */
+@font-face{font-family:'FA6 Free Solid';font-style:normal;font-weight:900;font-display:block;src:url('fa-solid-subset.woff2') format('woff2')}
+.fa{display:inline-block;font-family:'FA6 Free Solid';font-weight:900;font-style:normal;font-variant:normal;line-height:1;text-rendering:auto;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+.fa-trophy::before{content:"\f091"}
+.fa-medal::before{content:"\f5a2"}
+.fa-award::before{content:"\f559"}
+.fa-crown::before{content:"\f521"}
+.fa-star::before{content:"\f005"}
+.fa-bolt::before{content:"\f0e7"}
+.fa-stopwatch::before{content:"\f2f2"}
+.fa-hourglass-half::before{content:"\f252"}
+.fa-fire::before{content:"\f06d"}
+.fa-lightbulb::before{content:"\f0eb"}
+.fa-brain::before{content:"\f5dc"}
+.fa-gamepad::before{content:"\f11b"}
+.fa-music::before{content:"\f001"}
+.fa-film::before{content:"\f008"}
+.fa-earth-europe::before{content:"\f7a2"}
+.fa-circle-check::before{content:"\f058"}
+.fa-circle-xmark::before{content:"\f057"}
+.fa-xmark::before{content:"\f00d"}
+.fa-check::before{content:"\f00c"}
+.fa-arrow-left::before{content:"\f060"}
+.fa-arrow-right::before{content:"\f061"}
+.fa-play::before{content:"\f04b"}
+.fa-pause::before{content:"\f04c"}
+.fa-forward::before{content:"\f04e"}
+.fa-rotate-right::before{content:"\f2f9"}
+.fa-copy::before{content:"\f0c5"}
+.fa-share-nodes::before{content:"\f1e0"}
+.fa-link::before{content:"\f0c1"}
+.fa-volume-high::before{content:"\f028"}
+.fa-volume-xmark::before{content:"\f6a9"}
+.fa-user::before{content:"\f007"}
+.fa-user-group::before{content:"\f500"}
+.fa-people-group::before{content:"\e533"}
+.fa-ranking-star::before{content:"\e561"}
+.fa-lock::before{content:"\f023"}
+.fa-lock-open::before{content:"\f3c1"}
+.fa-circle-info::before{content:"\f05a"}
+.fa-trash::before{content:"\f1f8"}
+.fa-hand::before{content:"\f256"}
+.fa-microphone::before{content:"\f130"}
+.fa-tv::before{content:"\f26c"}
+.fa-mobile-screen::before{content:"\f3cf"}
+.fa-flag-checkered::before{content:"\f11e"}
+.fa-question::before{content:"\3f"}
+.fa-face-grin-stars::before{content:"\f587"}
+.fa-handshake::before{content:"\f2b5"}
+.fa-bullseye::before{content:"\f140"}
+.fa-layer-group::before{content:"\f5fd"}
+.fa-wand-magic-sparkles::before{content:"\e2ca"}
+.fa-clapperboard::before{content:"\e131"}
+.fa-masks-theater::before{content:"\f630"}
+.fa-graduation-cap::before{content:"\f19d"}
+.fa-dice::before{content:"\f522"}
+.fa-shuffle::before{content:"\f074"}
+.fa-list-check::before{content:"\f0ae"}
+.fa-comment-dots::before{content:"\f4ad"}
+.fa-hand-pointer::before{content:"\f25a"}
+.fa-keyboard::before{content:"\f11c"}
+.fa-forward-step::before{content:"\f051"}
+.fa-circle-play::before{content:"\f144"}
+.fa-gear::before{content:"\f013"}
+.fa-eye::before{content:"\f06e"}
+.fa-sliders::before{content:"\f1de"}
+.fa-fire-flame-curved::before{content:"\f7e4"}

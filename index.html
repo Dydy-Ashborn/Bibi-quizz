@@ -1,0 +1,454 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#062a8a">
+<title>Bibi Quizz</title>
+<meta name="description" content="Bibi Quizz : le grand jeu de culture générale en soirée. Buzzer, 4 à la suite et face-à-face, chacun joue sur son téléphone.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@1,800;1,900&family=Kaushan+Script&family=Outfit:wght@400;600;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="vendor/fontawesome/fa.css">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="decor" aria-hidden="true">
+  <span class="beam beam-1"></span><span class="beam beam-2"></span><span class="beam beam-3"></span>
+  <div class="decor-floor"></div>
+</div>
+<div id="fxLayer" class="fx-layer" aria-hidden="true"></div>
+
+<!-- ═══════════════ BOOT ═══════════════ -->
+<section id="screen-boot" class="screen">
+  <div class="center-stack">
+    <div class="logo logo-xl" aria-label="Bibi Quizz"><span class="logo-bibi">Bibi</span><span class="logo-quizz">Quizz</span></div>
+    <p class="loader-text">Les candidats prennent place…</p>
+  </div>
+</section>
+
+<!-- ═══════════════ ACCUEIL ═══════════════ -->
+<section id="screen-home" class="screen is-active">
+  <div class="home-shell">
+    <nav class="home-nav" aria-label="Navigation principale">
+      <a href="#/" class="wordmark">Bibi<span>Quizz.</span></a>
+      <span class="nav-edition">LE QUIZ QUI RÉUNIT TOUT LE MONDE</span>
+      <button class="btn btn-ghost btn-sm" data-goto="#/compte">Mon compte <i class="fa fa-arrow-right"></i></button>
+    </nav>
+    <div id="connectionNotice" class="connection-notice" role="status" hidden>Le multijoueur est indisponible pour le moment. Tu peux essayer le quiz en solo. <button onclick="location.reload()">Réessayer</button></div>
+    <div class="home-hero">
+      <div class="hero-copy">
+        <p class="live-pill"><span></span> VOTRE SALON. VOTRE PLATEAU.</p>
+        <h1>Ce soir,<br>le champion,<br><em>c'est qui ?</em></h1>
+        <p class="hero-description">Un grand écran, vos téléphones et un peu de mauvaise foi. Le grand jeu de culture générale débarque chez vous.</p>
+        <div class="hero-facts"><span><i class="fa fa-people-group"></i> 2–8 joueurs</span><span><i class="fa fa-stopwatch"></i> 45 min – 1 h</span><span><i class="fa fa-bolt"></i> Sans installation</span></div>
+        <div class="home-actions">
+          <button id="btnGoCreate" class="btn btn-gold btn-xl"><i class="fa fa-tv"></i> Créer une partie <i class="fa fa-arrow-right"></i></button>
+          <p class="action-note">Découverte gratuite · 140 questions fixes · 4 joueurs</p>
+          <button id="btnDemo" class="demo-link">Essayer 10 questions en solo <span>↗</span></button>
+        </div>
+      </div>
+      <div class="hero-stage" aria-label="Plateau Bibi Quizz : trois manches pour devenir champion">
+        <div class="stage-orbit orbit-one"></div><div class="stage-orbit orbit-two"></div>
+        <div class="stage-onair"><span></span> ON AIR</div>
+        <div class="logo logo-lg" aria-label="Bibi Quizz"><span class="logo-bibi">Bibi</span><span class="logo-quizz">Quizz</span></div>
+        <span class="stage-caption">À VOUS DE FAIRE LE SHOW</span>
+        <div class="stage-podiums" aria-hidden="true">
+          <div class="mini-desk"><span>01 / RAPIDITÉ</span><strong>9</strong><small>points gagnants</small></div>
+          <div class="mini-desk mini-desk-gold"><span>02 / SANG-FROID</span><strong>4</strong><small>à la suite</small><div class="desk-lights">● ● ● ●</div></div>
+          <div class="mini-desk"><span>03 / DUEL</span><strong>12</strong><small>points pour gagner</small></div>
+        </div>
+        <div class="stage-baseline"></div>
+      </div>
+    </div>
+    <div class="home-join-strip">
+      <div><span class="eyebrow">DÉJÀ UNE PARTIE EN COURS ?</span><h2>Ton téléphone devient ton buzzer.</h2></div>
+      <div class="join-inline"><input id="inputJoinCode" class="input input-code" maxlength="5" placeholder="CODE" autocomplete="off" spellcheck="false" aria-label="Code de la partie"><button id="btnGoJoin" class="btn btn-blue">Rejoindre <i class="fa fa-arrow-right"></i></button></div>
+    </div>
+    <div id="homeHistory" class="history" hidden><h2 class="section-title">Tes dernières parties</h2><div id="homeHistoryList" class="history-list"></div></div>
+    <section class="home-categories" aria-labelledby="categoriesTitle"><div class="section-heading"><div><p class="eyebrow">LA CULTURE G, SANS LES ŒILLÈRES</p><h2 id="categoriesTitle">De la mythologie à ta playlist.</h2></div><span id="categoryCount"></span></div><div id="categoryChips" class="category-chips"></div><p id="homeStats" class="card-sub"></p></section>
+    <section class="home-rounds" aria-labelledby="roundsTitle"><div class="section-heading"><div><p class="eyebrow">TROIS MANCHES. UN CHAMPION.</p><h2 id="roundsTitle">Les réflexes, la série, le duel.</h2></div></div>
+      <div class="round-grid"><article><span class="round-number">01</span><h3>9 points gagnants</h3><p>Buzze avant les autres, réponds et décroche ta place pour la suite.</p><span class="round-tag">LE PLUS RAPIDE A LA MAIN</span></article><article><span class="round-number">02</span><h3>4 à la suite</h3><p>Choisis ton thème. Enchaîne quatre bonnes réponses. Une erreur et la série repart à zéro.</p><span class="round-tag">40 S À L’ORAL · 60 S AU CLAVIER</span></article><article><span class="round-number">03</span><h3>Le face-à-face</h3><p>Prendre ou laisser la main ? Des indices, des zones à 4, 3, 2, 1 points. Premier à 12 !</p><span class="round-tag">LE DUEL FINAL</span></article></div>
+    </section>
+    <footer class="home-footer"><a href="#/" class="wordmark">Bibi<span>Quizz.</span></a><p>Une soirée, deux émissions, et tout le monde revient en jeu.<br>Durée indicative selon votre rythme · Internet requis en multijoueur.</p><button class="link-btn" data-goto="#/compte">Version complète · 4,99 €</button></footer>
+  </div>
+</section>
+
+<!-- ═══════════════ MON COMPTE ═══════════════ -->
+<section id="screen-compte" class="screen">
+  <div class="wrap">
+    <header class="bar">
+      <button class="btn btn-back" data-goto="#/" aria-label="Retour"><i class="fa fa-arrow-left"></i></button>
+      <h1 class="bar-title">Mon compte</h1>
+    </header>
+    <div class="card">
+      <h2 class="card-title"><i class="fa fa-crown"></i> <span id="comptePlan">—</span></h2>
+      <p id="compteDetail" class="card-sub"></p>
+      <div class="row-btns">
+        <button id="btnCompteRefresh" class="btn btn-ghost btn-sm"><i class="fa fa-rotate-right"></i> Vérifier mon statut</button>
+        <button id="btnCompteBuy" class="btn btn-gold btn-sm"><i class="fa fa-crown"></i> Version complète</button>
+      </div>
+      <p id="compteDiag" class="diag" hidden></p>
+    </div>
+    <div class="card">
+      <h2 class="card-title">Mon identifiant</h2>
+      <p class="card-sub">C'est lui qui porte ton achat. Il est propre à ce navigateur :
+        garde-le si tu dois nous écrire au sujet d'un achat.</p>
+      <div class="link-box"><span id="compteUid" class="link-text mono">—</span></div>
+      <button id="btnCompteCopy" class="btn btn-blue"><i class="fa fa-copy"></i> Copier l'identifiant</button>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ CRÉATION ═══════════════ -->
+<section id="screen-create" class="screen">
+  <div class="wrap" id="createForm">
+    <header class="bar">
+      <button class="btn btn-back" data-goto="#/" aria-label="Retour"><i class="fa fa-arrow-left"></i></button>
+      <h1 class="bar-title">Nouvelle émission</h1>
+    </header>
+
+    <div class="card">
+      <h2 class="card-title"><i class="fa fa-stopwatch"></i> Format</h2>
+      <div class="choice-grid choice-grid-3" data-field="format">
+        <button class="choice" data-value="emission">
+          <span class="choice-label">Une émission</span><span class="choice-hint">Découverte gratuite · les 3 manches</span>
+        </button>
+        <button class="choice is-on" data-value="soiree">
+          <span class="choice-label">La soirée</span><span class="choice-hint">45 min – 1 h · 2 émissions + grande finale</span>
+        </button>
+        <button class="choice" data-value="marathon">
+          <span class="choice-label">Le marathon</span><span class="choice-hint">≈ 1 h 30 · 3 émissions + grande finale</span>
+        </button>
+      </div>
+      <p class="card-sub">Chaque émission sacre un champion. Plusieurs émissions sans vainqueur net ? Grande Finale pour désigner le Super Champion.</p>
+    </div>
+
+    <div class="card">
+      <h2 class="card-title"><i class="fa fa-sliders"></i> Ton de la soirée</h2>
+      <div class="choice-grid choice-grid-3" data-field="ton">
+        <button class="choice" data-value="classique">
+          <span class="choice-label">Classique</span><span class="choice-hint">Histoire, géo, sciences, arts, chanson…</span>
+        </button>
+        <button class="choice is-on" data-value="mix">
+          <span class="choice-label">Mix</span><span class="choice-hint">L'esprit d'origine, remis au goût du jour</span>
+        </button>
+        <button class="choice" data-value="moderne">
+          <span class="choice-label">100 % moderne</span><span class="choice-hint">Rap, séries, manga, jeux vidéo, streamers…</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 class="card-title">Comment répondre ?</h2>
+      <div class="choice-grid" data-field="reponses">
+        <button class="choice is-on" data-value="oral"><span class="choice-label">Comme à la télé</span><span class="choice-hint">Buzzer sur téléphone, réponses à voix haute. Un animateur valide. 4 à la suite : 40 s.</span></button>
+        <button class="choice" data-value="clavier"><span class="choice-label">Tout sur téléphone</span><span class="choice-hint">Réponses tapées, correction automatique. 4 à la suite : 60 s pour écrire.</span></button>
+      </div>
+    </div>
+
+    <div id="planBanner" class="plan-banner" hidden>
+      <span><i class="fa fa-crown"></i> <strong id="planBannerTitle">Version gratuite</strong>
+      <span id="planBannerLine"></span></span>
+      <button id="btnPlanUpgrade" class="btn btn-gold btn-sm">Débloquer</button>
+    </div>
+    <button id="btnCreateGame" class="btn btn-gold btn-xl">Ouvrir le plateau <i class="fa fa-arrow-right"></i></button>
+  </div>
+</section>
+
+<!-- ═══════════════ SALON (HÔTE) ═══════════════ -->
+<section id="screen-lobby" class="screen screen-tv">
+  <div class="wrap wrap-wide">
+    <header class="bar">
+      <button class="btn btn-back" data-goto="#/" aria-label="Retour"><i class="fa fa-arrow-left"></i></button>
+      <h1 class="bar-title">Les candidats prennent place</h1>
+    </header>
+    <div class="lobby-grid">
+      <div class="lobby-join">
+        <p class="eyebrow">Sur ton téléphone, va sur</p>
+        <p id="lobbyUrl" class="lobby-url">—</p>
+        <p class="eyebrow">et tape le code</p>
+        <div id="lobbyCode" class="big-code">—</div>
+        <p id="lobbyFormat" class="lobby-format"></p>
+        <div class="row-btns">
+          <button id="btnLobbyCopy" class="btn btn-ghost btn-sm"><i class="fa fa-copy"></i> Copier le lien</button>
+          <button id="btnLobbyShare" class="btn btn-ghost btn-sm"><i class="fa fa-share-nodes"></i> Partager…</button>
+        </div>
+      </div>
+      <div class="lobby-players">
+        <h2 class="card-title"><i class="fa fa-people-group"></i> Candidats <span id="lobbyCount" class="mono"></span></h2>
+        <div id="lobbyList" class="player-chips"></div>
+        <p id="lobbyEmpty" class="card-sub">Personne pour l'instant… Les candidats apparaissent ici dès qu'ils rejoignent.</p>
+        <p id="lobbyHint" class="lobby-hint"></p>
+      </div>
+    </div>
+    <div class="row-btns row-btns-sticky">
+      <button id="btnStartLive" class="btn btn-gold btn-xl"><i class="fa fa-play"></i> Générique !</button>
+      <button id="btnDeleteGame" class="btn btn-danger btn-sm"><i class="fa fa-trash"></i> Supprimer la partie</button>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ PLATEAU (HÔTE) ═══════════════ -->
+<section id="screen-live" class="screen screen-tv">
+  <div class="tv">
+    <header class="tv-head">
+      <div class="tv-info"><span id="liveEmission" class="tv-emission">Émission 1</span><span id="liveManche" class="tv-manche"></span></div>
+      <div class="logo logo-sm" aria-hidden="true"><span class="logo-bibi">Bibi</span><span class="logo-quizz">Quizz</span></div>
+      <div class="tv-cmds">
+        <button id="btnAuto" class="btn btn-ghost btn-sm"></button>
+        <button id="btnCloreManche" class="btn btn-ghost btn-sm" hidden><i class="fa fa-flag-checkered"></i> Clore la manche</button>
+        <button id="btnLiveQuit" class="btn btn-ghost btn-sm">Terminer</button>
+      </div>
+    </header>
+
+    <main class="tv-main">
+      <!-- Carton d'annonce -->
+      <div id="stCarton" class="stage carton" hidden>
+        <div id="cartonIcon" class="carton-icon"></div>
+        <h2 id="cartonTitle" class="carton-title"></h2>
+        <p id="cartonSub" class="carton-sub"></p>
+        <ul id="cartonRules" class="carton-rules" hidden></ul>
+        <div id="cartonProno" class="carton-prono" hidden></div>
+      </div>
+
+      <!-- Manche 1 : Neuf points gagnants -->
+      <div id="stR1" class="stage" hidden>
+        <div id="r1Box" class="qpanel">
+          <div class="qpanel-top">
+            <span id="r1Cat" class="chip-cat"></span>
+            <span id="r1Num" class="qpanel-num"></span>
+            <span id="r1Valeur" class="chip-val"></span>
+          </div>
+          <p id="r1Texte" class="qpanel-texte"></p>
+          <p id="r1Status" class="qpanel-status"></p>
+          <div id="r1Rev" class="reveal" hidden>
+            <div class="reveal-rep"><span class="reveal-label">Réponse</span><strong id="r1Reponse"></strong></div>
+            <p id="r1Resultat" class="reveal-res"></p>
+            <div id="r1Tentatives" class="tentatives"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Manche 2 : 4 à la suite -->
+      <div id="stR2" class="stage" hidden>
+        <div id="r2Choix">
+          <p id="r2Qui" class="r2-qui"></p>
+          <div id="r2Themes" class="theme-grid"></div>
+        </div>
+        <div id="r2Jeu" class="r2-jeu" hidden>
+          <div class="r2-side">
+            <div id="r2ChronoWrap" class="chrono"><span id="r2Chrono" class="mono">60</span></div>
+            <div id="r2Lampes" class="lampes"></div>
+            <p id="r2Best" class="r2-best"></p>
+          </div>
+          <div class="qpanel r2-panel">
+            <div class="qpanel-top">
+              <span id="r2Theme" class="chip-cat"></span>
+              <span id="r2Num" class="qpanel-num"></span>
+              <span id="r2Joueur" class="chip-joueur"></span>
+            </div>
+            <p id="r2Q" class="qpanel-texte"></p>
+            <p id="r2Last" class="r2-last"></p>
+          </div>
+        </div>
+        <div id="r2Bilan" class="carton" hidden>
+          <div class="carton-icon"><i class="fa fa-fire"></i></div>
+          <h2 id="r2BilanTitre" class="carton-title"></h2>
+          <p id="r2BilanSous" class="carton-sub"></p>
+        </div>
+      </div>
+
+      <!-- Manche 3 : Face-à-face -->
+      <div id="stFaf" class="stage" hidden>
+        <div class="faf">
+          <div id="fafA" class="faf-desk"></div>
+          <div class="faf-centre">
+            <div class="faf-head"><span id="fafTheme" class="chip-cat"></span><span id="fafValeur" class="chip-val"></span></div>
+            <ol id="fafIndices" class="faf-indices"></ol>
+            <p id="fafStatus" class="qpanel-status"></p>
+            <div id="fafRev" class="reveal" hidden>
+              <div class="reveal-rep"><span class="reveal-label">Réponse</span><strong id="fafReponse"></strong></div>
+              <p id="fafResultat" class="reveal-res"></p>
+              <div id="fafTentatives" class="tentatives"></div>
+            </div>
+          </div>
+          <div id="fafB" class="faf-desk"></div>
+        </div>
+      </div>
+
+      <!-- Fin d'émission -->
+      <div id="stFin" class="stage carton" hidden>
+        <div class="carton-icon podium-crown"><i class="fa fa-crown"></i></div>
+        <h2 id="finTitre" class="carton-title"></h2>
+        <p id="finSous" class="carton-sub"></p>
+        <h3 class="board-title"><i class="fa fa-ranking-star"></i> Classement de la soirée</h3>
+        <div id="finClassement" class="podium-board"></div>
+      </div>
+    </main>
+
+    <div id="desks" class="desks" hidden></div>
+
+    <footer class="tv-foot">
+      <span id="liveHint" class="tv-hint"></span>
+      <div id="oralControls" class="oral-controls" hidden><span>Verdict de l’animateur</span><button id="btnOralGood" class="btn btn-gold">✓ Bonne réponse</button><button id="btnOralBad" class="btn btn-ghost">✕ Faux / passer</button></div>
+      <button id="btnLiveNext" class="btn btn-gold btn-xl">Suivant <i class="fa fa-arrow-right"></i></button>
+    </footer>
+  </div>
+</section>
+
+<!-- ═══════════════ PODIUM DE LA SOIRÉE (HÔTE) ═══════════════ -->
+<section id="screen-podium" class="screen screen-tv">
+  <div class="wrap wrap-wide">
+    <div class="center-stack">
+      <div class="podium-crown"><i class="fa fa-crown"></i></div>
+      <h1 id="podiumTitle" class="podium-title">—</h1>
+      <p id="podiumLine" class="podium-line"></p>
+      <div id="podiumTrophees" class="trophees"></div>
+      <div id="podiumBoard" class="podium-board"></div>
+      <div class="row-btns">
+        <button id="btnReplay" class="btn btn-gold btn-xl"><i class="fa fa-rotate-right"></i> Nouvelle soirée, mêmes candidats</button>
+        <button class="btn btn-ghost" data-goto="#/">Accueil</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ REJOINDRE (JOUEUR) ═══════════════ -->
+<section id="screen-join" class="screen">
+  <div class="wrap">
+    <div class="logo logo-md" aria-label="Bibi Quizz"><span class="logo-bibi">Bibi</span><span class="logo-quizz">Quizz</span></div>
+    <div class="card">
+      <h2 class="card-title">Partie <span id="joinCode" class="mono"></span></h2>
+      <p id="joinMeta" class="card-sub"></p>
+      <label class="field">
+        <span class="field-label">Ton prénom</span>
+        <input id="inputName" class="input" maxlength="16" placeholder="Ash" autocomplete="given-name">
+      </label>
+      <div class="field">
+        <span class="field-label">Ton son de buzzer</span>
+        <div id="joinSons" class="sons"></div>
+      </div>
+      <button id="btnJoinConfirm" class="btn btn-gold btn-xl">Je prends place <i class="fa fa-arrow-right"></i></button>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ MANETTE (JOUEUR) ═══════════════ -->
+<section id="screen-play" class="screen">
+  <div class="play">
+    <header class="play-head">
+      <span id="playMe" class="play-me"></span>
+      <span id="playStatus" class="play-status"></span>
+    </header>
+
+    <div class="play-body">
+      <!-- Attente / annonces / public -->
+      <div id="p-wait" class="p-wait">
+        <div id="pWaitIcon" class="p-wait-icon"><i class="fa fa-tv"></i></div>
+        <p id="pWaitTitre" class="p-wait-titre"></p>
+        <p id="pWaitLigne" class="p-wait-ligne"></p>
+        <button id="pWaitTest" class="btn btn-ghost" hidden><i class="fa fa-bolt"></i> Tester mon buzzer</button>
+        <div id="pProno" class="p-prono" hidden>
+          <p class="field-label"><i class="fa fa-eye"></i> Pronostic du public</p>
+          <div id="pPronoList" class="p-prono-list"></div>
+          <p id="pPronoLigne" class="p-prono-ligne"></p>
+        </div>
+      </div>
+
+      <!-- Le buzzer -->
+      <div id="p-buzz" class="p-buzz" hidden>
+        <p id="pBuzzCat" class="p-cat"></p>
+        <p id="pBuzzQ" class="p-question"></p>
+        <ol id="pBuzzIndices" class="p-indices" hidden></ol>
+        <button id="btnBuzz" class="buzzer" aria-label="Buzzer"><span>BUZZ</span></button>
+        <p id="pBuzzLigne" class="p-ligne"></p>
+      </div>
+
+      <!-- Saisie d'une réponse -->
+      <div id="p-saisie" class="p-saisie" hidden>
+        <div class="p-saisie-head"><span id="pSaisieTitre" class="p-saisie-titre"></span><span id="pSaisieTimer" class="p-timer mono"></span></div>
+        <p id="pSaisieQ" class="p-question"></p>
+        <ol id="pSaisieIndices" class="p-indices" hidden></ol>
+        <div id="pSaisieR2" class="p-r2" hidden><div id="pLampes" class="lampes lampes-sm"></div><span id="pBest" class="p-best"></span></div>
+        <p id="oralHint" class="p-ligne" hidden>Réponds à voix haute. L’animateur valide sur le grand écran.</p>
+        <div class="p-saisie-row">
+          <input id="inputReponse" class="input input-rep" maxlength="60" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="send" placeholder="Ta réponse…">
+          <button id="btnValider" class="btn btn-gold" aria-label="Valider"><i class="fa fa-check"></i></button>
+        </div>
+        <button id="btnPasser" class="btn btn-ghost" hidden><i class="fa fa-forward"></i> Je passe</button>
+        <p id="pSaisieEnvoye" class="p-envoye" hidden><i class="fa fa-circle-check"></i> Réponse envoyée… verdict sur l'écran !</p>
+        <div id="pSaisieFlash" class="saisie-flash"></div>
+      </div>
+
+      <!-- Choix du thème (4 à la suite) -->
+      <div id="p-themes" class="p-themes" hidden>
+        <div class="p-saisie-head"><span class="p-saisie-titre">Choisis ton thème</span><span id="pThemesTimer" class="p-timer mono"></span></div>
+        <div id="pThemes" class="p-themes-list"></div>
+      </div>
+
+      <!-- Prendre ou laisser la main (face-à-face) -->
+      <div id="p-main" class="p-main" hidden>
+        <div class="p-saisie-head"><span class="p-saisie-titre">Tu as la main</span><span id="pMainTimer" class="p-timer mono"></span></div>
+        <p class="field-label">Thème</p>
+        <p id="pMainTheme" class="p-main-theme"></p>
+        <button class="btn btn-gold btn-xl" data-main="prendre"><i class="fa fa-hand"></i> Je prends</button>
+        <button class="btn btn-blue btn-xl" data-main="laisser"><i class="fa fa-handshake"></i> Je laisse</button>
+      </div>
+
+      <!-- Résultat d'une question -->
+      <div id="p-result" class="p-result" hidden>
+        <div id="pResIcon" class="res-icon"></div>
+        <p id="pResTitre" class="p-res-titre"></p>
+        <p class="field-label">La réponse</p>
+        <p id="pResReponse" class="p-res-rep"></p>
+        <p id="pResLigne" class="p-ligne"></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="screen-demo" class="screen"><div class="wrap"><header class="bar"><a class="btn btn-back" href="#/" aria-label="Retour à l'accueil">←</a><h1 class="bar-title">L'échauffement</h1><span class="demo-badge">SOLO</span></header><p class="card-sub">10 questions pour tester tes réflexes. Aucun compte, aucun achat.</p><div class="demo-progress" id="demoProgress"></div><div class="card demo-card"><p id="demoCategory" class="eyebrow"></p><p id="demoQuestion" class="demo-question"></p><form id="demoForm"><label class="field"><span class="field-label">Ta réponse</span><input id="demoAnswer" class="input" maxlength="60" autocomplete="off" placeholder="Je dirais…"></label><button class="btn btn-gold" id="demoSubmit">Valider</button><button class="btn btn-ghost" type="button" id="demoSkip">Passer</button></form><div id="demoFeedback" role="status" class="demo-feedback" hidden></div><button id="demoNext" class="btn btn-gold" hidden>Question suivante →</button></div><p id="demoScore" class="card-sub"></p></div></section>
+
+<!-- ═══════════════ PAYWALL ═══════════════ -->
+<div id="paywall" class="modal">
+  <div class="modal-box paywall-box">
+    <div class="paywall-crown"><i class="fa fa-crown"></i></div>
+    <h2 class="paywall-title">Version complète</h2>
+    <p id="paywallWhy" class="paywall-why"></p>
+    <ul class="paywall-list">
+      <li><i class="fa fa-circle-check"></i> <strong>Toute la banque</strong> : 1 672 questions, 50 thèmes et 160 énigmes</li>
+      <li><i class="fa fa-circle-check"></i> Les <strong>soirées de 45 min–1 h</strong>, le marathon et tous les tons</li>
+      <li><i class="fa fa-circle-check"></i> Jusqu'à <strong>8 candidats</strong></li>
+    </ul>
+    <div class="paywall-price"><strong id="paywallPrice">4,99 €</strong> en achat unique</div>
+    <p class="paywall-note">C'est le maître du jeu qui paie. Achat lié à ce navigateur : conserve ses données pour retrouver ton accès. Les invités ne paient rien.</p>
+    <div class="modal-actions">
+      <button id="paywallCancel" class="btn btn-ghost">Plus tard</button>
+      <button id="paywallBuy" class="btn btn-gold">Débloquer</button>
+    </div>
+    <button id="paywallRestore" class="link-btn">J'ai déjà acheté sur cet appareil</button>
+  </div>
+</div>
+
+<!-- ═══════════════ MODALE MAISON ═══════════════ -->
+<div id="confirmModal" class="modal">
+  <div class="modal-box">
+    <p id="confirmModalText" class="modal-text"></p>
+    <div class="modal-actions">
+      <button id="confirmModalCancel" class="btn btn-ghost">Annuler</button>
+      <button id="confirmModalOk" class="btn btn-gold">Confirmer</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<button id="btnMute" class="mute-btn" title="Couper le son" aria-label="Couper le son"><i class="fa fa-volume-high"></i></button>
+
+<script type="module" src="js/entry.js"></script>
+</body>
+</html>
