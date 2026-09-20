@@ -1,3 +1,4 @@
+import { LEGAL_VERSION } from './legal-config.js';
 /* Bibi Quizz — routeur et amorçage (repris d'Attention à l'escalier). */
 import { $, iconHtml, showScreen, toast, sfx, toggleMute, isMuted, copy, burst } from './util.js';
 import { ready, uid, configure } from './firebase.js';
@@ -44,7 +45,7 @@ $('#inputJoinCode')?.addEventListener('keydown', e => { if (e.key === 'Enter') $
 
 /* Chiffres de la banque affichés sur l'accueil (jamais en dur dans le HTML). */
 const nbQ = BUZZ.length + THEMES.reduce((n, t) => n + t.questions.length, 0) + FAF.length;
-$('#homeStats').textContent = `${nbQ} questions · ${Object.keys(CATEGORIES).length} catégories · ${THEMES.length} thèmes de 4 à la suite · ${FAF.length} énigmes de face-à-face`;
+$('#homeStats').textContent = `${nbQ} questions · ${Object.keys(CATEGORIES).length} catégories · ${THEMES.length} thèmes de Rafale chrono · ${FAF.length} énigmes de duel des indices`;
 
 /* ── Mon compte : seul écran qui expose l'uid (déblocage manuel, support) ── */
 function enterCompte() {
@@ -86,11 +87,12 @@ if (!LIEN_PAIEMENT && $('#paywallBuy')) {
   $('#paywallBuy').textContent = 'Bientôt disponible';
 }
 $('#paywallBuy')?.addEventListener('click', () => {
+  if (!$('#legalConsent').checked) { toast('Accepte les CGV et CGU avant de continuer.', 'info'); $('#legalConsent').focus(); return; }
   const url = urlPaiement();
   if (!url) { toast("Le paiement n'est pas encore ouvert. Reviens bientôt !", 'err'); return; }
   // Marque le départ vers Stripe : au retour on attend le webhook au lieu
   // d'annoncer froidement « version gratuite » à quelqu'un qui vient de payer.
-  try { sessionStorage.setItem('bq.achat', '1'); } catch {}
+  try { sessionStorage.setItem('bq.achat', '1'); sessionStorage.setItem('bq.conditions', JSON.stringify({ version: LEGAL_VERSION, acceptedAt: new Date().toISOString() })); } catch {}
   location.href = url;
 });
 
@@ -126,6 +128,7 @@ function majMute(actif) {
   muteBtn.classList.toggle('is-muted', !actif);
   muteBtn.title = actif ? 'Couper le son' : 'Réactiver le son';
   muteBtn.setAttribute('aria-label', muteBtn.title);
+  muteBtn.setAttribute('aria-pressed', String(!actif));
 }
 majMute(!isMuted());
 muteBtn.addEventListener('click', () => {
@@ -155,7 +158,3 @@ muteBtn.addEventListener('click', () => {
   const wait = Math.max(0, 1100 - (Date.now() - t0));
   setTimeout(route, wait);
 })();
-
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
-}

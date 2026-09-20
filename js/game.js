@@ -2,11 +2,11 @@
  * Aucun accès au DOM ni à Firebase : testé tel quel sous Node (scripts/test-game.mjs).
  *
  * Déroulé d'une émission (fidèle à l'émission télé dont le jeu s'inspire) :
- *   1. Neuf points gagnants — buzzer. Une bonne réponse vaut 1 point tant qu'il reste
+ *   1. Course aux points — buzzer. Une bonne réponse vaut 1 point tant qu'il reste
  *      4 candidats ou plus en lice, 2 points à 3, 3 points à 2. À 9 points : qualifié.
- *   2. 4 à la suite — chacun son thème, 60 s, une erreur remet la série à zéro.
+ *   2. Rafale chrono — chacun son thème, points cumulés pendant le temps imparti.
  *      On retient la meilleure série ; égalité : le plus rapide à l'atteindre.
- *   3. Face-à-face — énigmes à indices, 4/3/2/1 points selon l'indice, premier à 12.
+ *   3. Duel des indices — énigmes à indices, 4/3/2/1 points selon l'indice, premier à 12.
  */
 import { BUZZ, THEMES, FAF, CATEGORIES, ereDe } from './data/questions.js';
 import { RULES } from './config.js';
@@ -207,14 +207,14 @@ export function prendre(list, ptr, n = 1) {
   return { ids: out, ptr: ptr + n };
 }
 
-/* ═══════════════ Manche 1 — Neuf points gagnants ═══════════════ */
+/* ═══════════════ Manche 1 — Course aux points ═══════════════ */
 
 /** Nombre de qualifiés visé : 3 à partir de 4 joueurs (règle télé), sinon N-1. */
 export function cibleQualifies(n) {
   return n >= 4 ? RULES.QUALIFIES_R1 : Math.max(1, n - 1);
 }
 
-/** À 3 joueurs ou moins, personne n'est éliminé au buzzer (sinon plus de 4 à la suite). */
+/** À 3 joueurs ou moins, personne n'est éliminé au buzzer (sinon plus de Rafale chrono). */
 export function r1Elimine(n) { return n >= 4; }
 
 /** Valeur d'une bonne réponse selon le nombre de candidats encore en lice. */
@@ -258,7 +258,7 @@ export function r1Cloture(r1, inscrits) {
   return { qualifies, elimines: reste };
 }
 
-/* ═══════════════ Manche 2 — 4 à la suite ═══════════════ */
+/* ═══════════════ Manche 2 — Rafale chrono ═══════════════ */
 
 /**
  * Applique une réponse dans le tour en cours.
@@ -267,14 +267,13 @@ export function r1Cloture(r1, inscrits) {
  * @param {number} ms  temps écoulé depuis le début du tour
  */
 export function r2Reponse(tour, ok, ms) {
-  const serie = ok ? tour.serie + 1 : 0;
-  let { best, tBest } = tour;
-  if (serie > best) { best = serie; tBest = ms; }
-  return { serie, best, tBest, fini: serie >= RULES.SERIE_R2 };
+  // Les points restent acquis, même après une erreur ; aucun arrêt à quatre.
+  const best = tour.best + (ok ? 1 : 0);
+  return { serie: best, best, tBest: ok ? ms : tour.tBest, fini: false };
 }
 
 /**
- * Classement de la manche : meilleure série, puis rapidité pour l'atteindre.
+ * Classement de la manche : total de bonnes réponses, puis rapidité pour atteindre ce total.
  * @param {Record<string,{best:number,tBest:number}>} res
  */
 export function r2Classement(res, joueurs) {
@@ -284,7 +283,7 @@ export function r2Classement(res, joueurs) {
   });
 }
 
-/* ═══════════════ Manche 3 — Face-à-face ═══════════════ */
+/* ═══════════════ Manche 3 — Duel des indices ═══════════════ */
 
 /** Points selon le nombre d'indices déjà affichés (1 → 4 pts … 4+ → 1 pt). */
 export function valeurFaf(indicesVus) {
@@ -371,7 +370,7 @@ export function trophees(st, joueurs) {
   const r = max(st.reflexes, true);
   if (r) out.push({ icone: 'bolt', titre: 'Main la plus rapide', uid: r.uid, detail: `buzz en ${(r.val / 1000).toFixed(1)} s` });
   const s = max(st.series);
-  if (s && s.val > 0) out.push({ icone: 'fire', titre: 'Meilleure série', uid: s.uid, detail: `${s.val} à la suite` });
+  if (s && s.val > 0) out.push({ icone: 'fire', titre: 'As de la rafale', uid: s.uid, detail: `${s.val} bonnes réponses dans un tour` });
   // Spécialiste : la catégorie où quelqu'un a le plus brillé.
   let spec = null;
   for (const [u, parCat] of Object.entries(st.cats || {})) {

@@ -1,0 +1,52 @@
+<!doctype html><html lang="fr"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="stylesheet" href="../css/style.css"><title>Vérification locale animateur</title><body><output id="checks" style="position:fixed;z-index:100;top:0;background:#09275c;color:white;font-size:12px"></output><script type="module">
+import { revealQuestion } from '../js/question-text.js';
+import { byId, themeById, fafById } from '../js/data/questions.js';
+import { PHASE, broadcast } from '../js/live.js';
+const markup = new DOMParser().parseFromString(await (await fetch('../index.html')).text(), 'text/html');
+const screen = markup.querySelector('#screen-live');
+screen.classList.add('is-active');
+document.body.append(screen);
+const $ = s => document.querySelector(s);
+const S = { etat: {}, game: { reponses:'oral' }, step:{}, seq:1, tour:1 };
+const sent = [];
+const source = await (await fetch('../js/host.js')).text();
+const body = source.slice(source.indexOf('function publish(fields) {'), source.indexOf('\nfunction stat('));
+const publish = new Function('S','$','oral','PHASE','byId','themeById','fafById','broadcast','nbEmissions','patchGame', body+';return publish;')(S,$,()=>S.game.reponses==='oral',PHASE,byId,themeById,fafById,broadcast,()=>1,(_code,data)=>{sent.push(data);return Promise.resolve();});
+let checks=0;
+const assert=(ok,msg)=>{if(!ok)throw Error(msg);checks++;};
+const buzz=Object.values(byId)[0], theme=Object.values(themeById)[0], faf=Object.values(fafById)[0];
+for(const [phase,step,q] of [
+ [PHASE.R1_REPONSE,{qid:buzz.id},buzz],
+ [PHASE.R2_JEU,{tid:theme.id,qi:0},theme.questions[0]],
+ [PHASE.R2_JEU,{tid:theme.id,qi:1},theme.questions[1]],
+ [PHASE.FAF_REPONSE,{qid:faf.id},faf]
+]){
+ S.step=step;await publish({phase});
+ assert(!$('#oralControls').hidden && $('#oralAnswer').textContent===q.r,'Réponse incorrecte '+phase);
+ assert(!JSON.stringify(sent.at(-1)).includes(q.r),'Correction diffusée');
+}
+await publish({phase:PHASE.R1_LECTURE});
+assert($('#oralControls').hidden && !$('#oralAnswer').textContent,'Ancienne correction visible');
+S.game.reponses='clavier';await publish({phase:PHASE.FAF_REPONSE});
+assert($('#oralControls').hidden,'Correction visible en mode clavier');
+S.game.reponses='oral';S.step={tid:theme.id,qi:0};
+await publish({phase:PHASE.R2_JEU});
+$('#stR2').hidden=false;$('#r2Jeu').hidden=false;$('#r2Choix').hidden=true;
+$('#r2Q').textContent=theme.questions[0].q;
+$('#r2Theme').textContent=theme.titre;
+$('#liveManche').textContent='4 à la suite';
+$('#r2Chrono').textContent='30';
+$('#btnLiveNext').textContent='Arrêter le tour';
+$('#btnAuto').textContent='Auto';
+// Vérifier les positions de tous les mots à chaque caractère, à trois largeurs.
+const probe=document.createElement('p');probe.className='qpanel-texte';probe.style.position='absolute';probe.style.top='1500px';document.body.append(probe);
+const text='Jeu de construction en blocs créé par Markus « Notch » Persson, peuplé de Creepers qui explosent. Lequel ?';
+for(const width of [320,768,1200]){
+ probe.style.width=width+'px';revealQuestion(probe,text,0);
+ const positions=()=>Array.from(probe.querySelectorAll('.question-word'),n=>{const r=n.getBoundingClientRect();return [r.x,r.y,r.width,r.height];});
+ const initial=JSON.stringify(positions());
+ for(let n=1;n<=text.length;n++) {revealQuestion(probe,text,n);assert(JSON.stringify(positions())===initial,'Déplacement de texte');}
+}
+probe.remove();
+$('#checks').textContent=checks+' vérifications réussies : réponses des 3 manches, changement, masquage, broadcast et stabilité à 320/768/1200 px.';
+</script></body></html>

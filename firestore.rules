@@ -67,6 +67,20 @@ service cloud.firestore {
         allow delete: if isHost(id);
       }
     }
+    match /withdrawalRequests/{requestId} {
+      allow get: if signedIn() && (!exists(/databases/$(database)/documents/withdrawalRequests/$(requestId)) || resource.data.uid == request.auth.uid);
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['uid','name','email','order','createdAt'])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 100
+        && request.resource.data.email is string
+        && request.resource.data.email.size() > 3 && request.resource.data.email.size() <= 254
+        && request.resource.data.order is string
+        && request.resource.data.order.size() > 0 && request.resource.data.order.size() <= 500
+        && request.resource.data.createdAt == request.time;
+      allow list, update, delete: if false;
+    }
     match /hosts/{hostId} {
       allow read: if signedIn() && request.auth.uid == hostId;
       allow write: if false;

@@ -4,7 +4,7 @@ import { shuffle, juger } from './game.js';
 
 const $ = s => document.querySelector(s);
 const count = BUZZ.length + THEMES.reduce((n,t) => n + t.questions.length, 0) + FAF.length;
-$('#homeStats').textContent = `${count.toLocaleString('fr-FR')} questions · ${THEMES.length} thèmes de 4 à la suite · ${FAF.length} énigmes de face-à-face`;
+$('#homeStats').textContent = `${count.toLocaleString('fr-FR')} questions · ${THEMES.length} thèmes de Rafale chrono · ${FAF.length} énigmes de duel des indices`;
 $('#categoryCount').textContent = `${Object.keys(CATEGORIES).length} catégories`;
 const featured = ['rap','manga','jv','series','food','kpop','web','sciences','mytho','ecologie','animation','voyage'];
 featured.filter(c => CATEGORIES[c]).forEach(c => {

@@ -96,45 +96,70 @@ export function vibre(motif = 30) {
 
 /* ── Sons synthétisés (aucun fichier audio à héberger) ──────────────────── */
 let actx = null;
-const audioOn = () => ls.get('bq.mute') !== '1';
+let master = null;
+let muted = ls.get('bq.mute') === '1';
+let audioGeneration = 0;
+const oscillators = new Set();
+const audioOn = () => !muted;
 export function toggleMute() {
-  const muted = ls.get('bq.mute') === '1';
-  ls.set('bq.mute', muted ? '0' : '1');
-  return !muted;
+  muted = !muted;
+  ls.set('bq.mute', muted ? '1' : '0');
+  audioGeneration++;
+  if (master && actx) master.gain.setValueAtTime(muted ? 0 : 1, actx.currentTime);
+  if (muted) {
+    for (const oscillator of oscillators) { try { oscillator.stop(); } catch {} }
+    oscillators.clear();
+  } else reveillerAudio();
+  return !muted; // État APRÈS la bascule, identique à celui réellement joué.
 }
-export function isMuted() { return ls.get('bq.mute') === '1'; }
+export function isMuted() { return muted; }
 
-/* Les navigateurs créent l'AudioContext `suspended` tant que l'utilisateur n'a pas
-   interagi : on le réveille au premier geste réel. */
 function ctx() {
-  if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)();
+  if (!actx || actx.state === 'closed') {
+    const Audio = typeof window !== 'undefined' && (window.AudioContext || window.webkitAudioContext);
+    if (!Audio) return null;
+    try {
+      actx = new Audio();
+      master = actx.createGain();
+      master.gain.setValueAtTime(muted ? 0 : 1, actx.currentTime);
+      master.connect(actx.destination);
+    } catch { return null; }
+  }
   return actx;
 }
-let audioPret = false;
 function reveillerAudio() {
+  if (!audioOn()) return;
   const c = ctx();
-  if (c.state === 'suspended') c.resume().then(() => { audioPret = true; }).catch(() => {});
-  else audioPret = true;
+  if (c && c.state !== 'running') c.resume().catch(() => {});
 }
-// Garde `typeof window` : le module est importé hors navigateur par les scripts de contrôle.
 if (typeof window !== 'undefined') {
   ['pointerdown', 'touchstart', 'keydown'].forEach(evt =>
     window.addEventListener(evt, reveillerAudio, { capture: true, passive: true }));
 }
 
 function blip(freq, start, dur, type = 'sine', gain = 0.18, slideTo = null) {
+  if (!audioOn()) return;
   const c = ctx();
-  if (c.state !== 'running') { reveillerAudio(); if (!audioPret) return; }
-  const o = c.createOscillator();
-  const g = c.createGain();
-  const t0 = c.currentTime + start;
-  o.type = type; o.frequency.setValueAtTime(freq, t0);
-  if (slideTo) o.frequency.exponentialRampToValueAtTime(slideTo, t0 + dur);
-  g.gain.setValueAtTime(0, t0);
-  g.gain.linearRampToValueAtTime(gain, t0 + 0.02);
-  g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
-  o.connect(g).connect(c.destination);
-  o.start(t0); o.stop(t0 + dur + 0.05);
+  if (!c) return;
+  const generation = audioGeneration;
+  const requestedAt = Date.now();
+  const play = () => {
+    if (!audioOn() || generation !== audioGeneration || c.state !== 'running' || Date.now() - requestedAt > 500) return;
+    const o = c.createOscillator();
+    const g = c.createGain();
+    const t0 = c.currentTime + start;
+    o.type = type; o.frequency.setValueAtTime(freq, t0);
+    if (slideTo) o.frequency.exponentialRampToValueAtTime(slideTo, t0 + dur);
+    g.gain.setValueAtTime(0, t0);
+    g.gain.linearRampToValueAtTime(gain, t0 + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    o.connect(g).connect(master);
+    oscillators.add(o);
+    o.onended = () => { oscillators.delete(o); o.disconnect(); g.disconnect(); };
+    o.start(t0); o.stop(t0 + dur + 0.05);
+  };
+  if (c.state === 'running') play();
+  else c.resume().then(play).catch(() => {});
 }
 
 /** Les six sons de buzzer au choix (config.BUZZERS). */
@@ -155,7 +180,7 @@ export const sfx = {
   bad()    { if (!audioOn()) return; blip(180, 0, .5, 'sawtooth', .13); blip(120, 0, .5, 'square', .06); },
   tick()   { if (audioOn()) blip(1200, 0, .03, 'square', .05); },
   lampe(n = 1) { if (audioOn()) blip(440 * Math.pow(1.26, n), 0, .18, 'triangle', .18); },
-  /** Indice suivant au face-à-face. */
+  /** Indice suivant au duel des indices. */
   indice() { if (!audioOn()) return; blip(740, 0, .12, 'sine', .14); blip(988, .08, .18, 'sine', .12); },
   qualif() { if (!audioOn()) return; [523, 659, 784, 1047, 1319].forEach((f, i) => blip(f, i * .08, .3, 'triangle', .17)); },
   /** Générique d'ouverture d'une manche. */

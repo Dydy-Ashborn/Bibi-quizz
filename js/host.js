@@ -1,3 +1,4 @@
+import { revealQuestion } from './question-text.js';
 /* Bibi Quizz — parcours du maître du jeu :
  * création → salon → plateau (écran partagé : télé, ordi) → podium de la soirée.
  *
@@ -5,8 +6,8 @@
  * juge, compte les points et diffuse l'état (live.js). Les téléphones ne décident rien.
  *
  * Une soirée = 1 à 3 émissions, chacune en trois manches :
- *   Neuf points gagnants → 4 à la suite → Face-à-face (12 points).
- * Plusieurs émissions sans vainqueur net → Grande Finale (face-à-face).
+ *   Course aux points → Rafale chrono → Duel des indices (12 points).
+ * Plusieurs émissions sans vainqueur net → Grande Finale (duel des indices).
  */
 import { $, $$, el, icon, iconHtml, esc, showScreen, showConfirmModal, toast, sfx, burst,
          copy, initiale, shake, listeNoms, pluriel } from './util.js';
@@ -187,8 +188,8 @@ function renderLobbyPlayers() {
   });
   const n = S.players.length;
   $('#lobbyHint').textContent = n < RULES.MIN_JOUEURS ? `Il faut au moins ${RULES.MIN_JOUEURS} candidats.`
-    : n < 4 ? `À ${n}, personne n'est éliminé au buzzer : tout le monde passe au 4 à la suite.`
-    : 'Format télé complet : 3 qualifiés au buzzer, 2 finalistes au face-à-face.';
+    : n < 4 ? `À ${n}, personne n'est éliminé au buzzer : tout le monde passe à la Rafale chrono.`
+    : 'Format à élimination : 3 qualifiés au buzzer, 2 finalistes au duel des indices.';
 }
 
 function pawn(p) {
@@ -241,6 +242,17 @@ const noms = uids => listeNoms(uids.map(nomDe));
 function publish(fields) {
   const e = S.etat;
   $('#oralControls').hidden = !oral() || ![PHASE.R1_REPONSE, PHASE.R2_JEU, PHASE.FAF_REPONSE].includes(fields.phase);
+  // Correction locale uniquement : aucune réponse ajoutée au broadcast.
+  const st = S.step;
+  const correction = $('#oralControls').hidden ? null
+    : fields.phase === PHASE.R1_REPONSE ? byId[st.qid]
+    : fields.phase === PHASE.R2_JEU ? themeById[st.tid]?.questions[st.qi]
+    : fafById[st.qid];
+  $('#oralAnswer').textContent = correction?.r || '';
+  const alternatives = (correction?.alt || []).filter(a => a !== correction.r);
+  $('#oralAlternatives').textContent = alternatives.length ? 'Aussi accepté : ' + alternatives.join(' · ') : '';
+  $('#oralAlternatives').hidden = !alternatives.length;
+
   const bc = broadcast({
     seq: S.seq, tour: S.tour, reponses: S.game?.reponses || 'clavier',
     emission: e?.emission || 1, nbEmissions: e?.nbEmissions || nbEmissions(S.game?.format),
@@ -285,7 +297,7 @@ function enterLive(reprise) {
 }
 
 function libelleManche(m) {
-  return ({ r1: 'Neuf points gagnants', r2: '4 à la suite', faf: 'Face-à-face', finale: 'Grande Finale',
+  return ({ r1: 'Course aux points', r2: 'Rafale chrono', faf: 'Duel des indices', finale: 'Grande Finale',
             'fin-emission': "Fin d'émission", fini: 'Fin de soirée', debut: 'Générique' })[m] || '';
 }
 
@@ -392,13 +404,13 @@ function startEmission(n) {
   const cible = cibleQualifies(N);
   carton({
     icone: 'bolt',
-    titre: e.nbEmissions > 1 ? `Émission ${n} — Neuf points gagnants` : 'Neuf points gagnants',
+    titre: e.nbEmissions > 1 ? `Émission ${n} — Course aux points` : 'Course aux points',
     sous: `${pluriel(N, 'candidat')} au buzzer. Premier à 9 points : qualifié !`,
     regles: [
       'La question s\'affiche au fil de l\'eau : buzzez dès que vous savez, même avant la fin.',
       `Le premier qui buzze ${oral() ? "répond à voix haute" : "tape sa réponse"} (${RULES.SECONDES_REPONSE} s). Une erreur : il ne peut plus buzzer sur cette question.`,
       'Une bonne réponse vaut 1 point, puis 2 points quand il ne reste que 3 candidats en lice, 3 points à 2.',
-      r1Elimine(N) ? `Les ${cible} premiers à 9 points passent au 4 à la suite, le dernier est éliminé.`
+      r1Elimine(N) ? `Les ${cible} premiers à 9 points passent à la Rafale chrono, le dernier est éliminé.`
                    : `À ${N}, personne n'est éliminé : l'ordre d'arrivée décide qui choisit son thème en premier.`
     ]
   }, () => r1Next(), 'Première question');
@@ -442,7 +454,7 @@ function r1Lecture() {
   st.kind = 'r1-lecture';
   st.main = null;
   const txt = $('#r1Texte');
-  const draw = () => { txt.innerHTML = esc(q.q.slice(0, st.shown)) + (st.shown < q.q.length ? '<span class="caret"></span>' : ''); };
+  const draw = () => revealQuestion(txt, q.q, st.shown);
   draw();
   $('#r1Status').innerHTML = st.bloques.length ? `${iconHtml('bolt')} Le buzzer est rouvert !` : '';
   publish({ phase: PHASE.R1_LECTURE, q: { texte: q.q, cat: CATEGORIES[q.c]?.l || '', depuis: st.shown, cps: RULES.LECTURE_CPS },
@@ -496,7 +508,7 @@ function r1Main(u) {
   flashDesk(u, 'pulse');
   let reste = RULES.SECONDES_REPONSE;
   const q = byId[st.qid];
-  $('#r1Texte').innerHTML = esc(q.q.slice(0, st.shown)) + (st.shown < q.q.length ? ' <span class="cut">…</span>' : '');
+  revealQuestion($('#r1Texte'), q.q, st.shown);
   const tic = () => { $('#r1Status').innerHTML = `${pawn(joueurDe(u)).outerHTML} <strong>${esc(nomDe(u))}</strong> a buzzé ! Réponse dans <strong>${reste}</strong> s`; };
   tic();
   publish({ phase: PHASE.R1_REPONSE, q: { texte: q.q, cat: CATEGORIES[q.c]?.l || '', depuis: st.shown, cps: 0 },
@@ -624,8 +636,8 @@ function r1Close(force) {
   const sous = elimines.length
     ? `Qualifiés : ${noms(qualifies)}. ${noms(elimines)} ${elimines.length > 1 ? 'quittent' : 'quitte'} le plateau.`
     : `Tout le monde continue ! Ordre de passage : ${noms(qualifies)}.`;
-  carton({ icone: 'flag-checkered', titre: force ? 'Fin des Neuf points gagnants (au score)' : 'Fin des Neuf points gagnants', sous },
-    () => r2Intro(), 'Place au 4 à la suite');
+  carton({ icone: 'flag-checkered', titre: force ? 'Fin de la Course aux points (au score)' : 'Fin de la Course aux points', sous },
+    () => r2Intro(), 'Place à la Rafale chrono');
 }
 
 /* ═══════════════ MANCHE 2 — 4 À LA SUITE ═══════════════ */
@@ -634,14 +646,14 @@ function r2Intro() {
   const e = E();
   sfx.jingle();
   carton({
-    icone: 'fire', titre: '4 à la suite',
+    icone: 'fire', titre: 'Rafale chrono',
     sous: `Quatre thèmes au choix, ${secondesR2()} secondes chacun.`,
     regles: [
       `Chacun son tour, dans l'ordre de qualification (${noms(e.r2.ordre)}), choisit un thème sur son téléphone.`,
       `${secondesR2()} secondes pour enchaîner : ${oral() ? "répondez à voix haute, l’animateur valide" : "tapez vite, « Passer » si vous séchez"}.`,
-      'Une erreur remet la série à zéro. Quatre bonnes réponses d\'affilée : c\'est gagné, le tour s\'arrête.',
-      'On retient la meilleure série. Égalité : le plus rapide à l\'atteindre passe devant.',
-      e.r2.ordre.length > 2 ? 'Les deux meilleurs vont au face-à-face.' : 'Les deux candidats se retrouvent au face-à-face : la meilleure série y prend la main en premier.'
+      'Chaque bonne réponse rapporte un point. Une erreur ou un passage ne retire aucun point.',
+      'Le tour dure jusqu’à la fin du chrono ou des 14 questions. Égalité : le total atteint le plus vite passe devant.',
+      e.r2.ordre.length > 2 ? 'Les deux meilleurs vont au duel des indices.' : 'Les deux candidats se retrouvent au duel des indices : le meilleur score y prend la main en premier.'
     ]
   }, () => r2Tour(), 'Premier candidat');
 }
@@ -732,8 +744,8 @@ function majChrono() {
   $('#r2ChronoWrap').style.setProperty('--p', Math.max(0, st.restant) / secondesR2());
   $('#r2ChronoWrap').classList.toggle('is-low', st.restant <= 10);
   $('#r2Lampes').innerHTML = '';
-  for (let i = 1; i <= RULES.SERIE_R2; i++) $('#r2Lampes').append(el('span', { class: 'lampe' + (i <= st.serie ? ' is-on' : '') }));
-  $('#r2Best').textContent = `Meilleure série : ${st.best}`;
+  $('#r2Lampes').hidden = true;
+  $('#r2Best').textContent = `Score : ${st.best}`;
 }
 
 function r2Ask() {
@@ -759,7 +771,7 @@ function r2Juge(texte) {
   const r = r2Reponse(st, ok, Date.now() - st.t0);
   Object.assign(st, { serie: r.serie, best: r.best, tBest: r.tBest });
   st.last = { texte: passe ? 'Je passe' : texte, ok, r: q.r };
-  if (ok) { stat('bonnes', st.joueur); sfx.lampe(st.serie); } else sfx.bad();
+  if (ok) { stat('bonnes', st.joueur); sfx.lampe(Math.min(4, st.serie)); } else sfx.bad();
   const sr = E().stats.series;
   sr[st.joueur] = Math.max(sr[st.joueur] || 0, st.best);
   $('#r2Last').innerHTML = `<span class="${ok ? 'ok' : 'ko'}">${iconHtml(ok ? 'circle-check' : 'circle-xmark')} « ${esc(st.last.texte)} »</span>`
@@ -780,15 +792,12 @@ function r2FinTour() {
   e.r2.tourIdx += 1;
   S.step = { kind: 'r2-fin', joueur };
   persist();
-  const quatre = best >= RULES.SERIE_R2;
   $('#r2Choix').hidden = true; $('#r2Jeu').hidden = true; $('#r2Bilan').hidden = false;
-  $('#r2BilanTitre').textContent = quatre ? '4 à la suite !' : `${nomDe(joueur)} : ${pluriel(best, 'point')}`;
-  $('#r2BilanSous').textContent = quatre
-    ? `${nomDe(joueur)} réussit le sans-faute en ${Math.round((st.tBest || 0) / 1000)} secondes.`
-    : `Meilleure série : ${best} sur ${RULES.SERIE_R2}.`;
-  if (quatre) { sfx.win(); burst(110); } else sfx.tap();
+  $('#r2BilanTitre').textContent = `${nomDe(joueur)} : ${pluriel(best, 'point')}`;
+  $('#r2BilanSous').textContent = 'Chaque bonne réponse compte. Les points restent acquis après une erreur.';
+  if (best > 0) sfx.win(); else sfx.tap();
   renderDesks();
-  publish({ phase: PHASE.R2_FIN, r2: { joueur, best, quatre } });
+  publish({ phase: PHASE.R2_FIN, r2: { joueur, best, quatre: false } });
   setNext(e.r2.tourIdx >= e.r2.ordre.length ? 'Résultats de la manche' : 'Candidat suivant', 'arrow-right');
   autoSuite(() => r2Tour(), 5000);
 }
@@ -806,9 +815,9 @@ function r2Close() {
   e.pronos = {};
   persist();
   const det = cl.map(u => `${nomDe(u)} ${e.r2.res[u]?.best ?? 0}`).join(' · ');
-  carton({ icone: 'ranking-star', titre: `${noms(finalistes)} au face-à-face !`,
+  carton({ icone: 'ranking-star', titre: `${noms(finalistes)} au duel des indices !`,
            sous: (out.length ? `${noms(out)} ${out.length > 1 ? 's\'arrêtent' : 's\'arrête'} là. ` : '') + `Séries : ${det}.` },
-    () => fafIntro(), 'Place au face-à-face');
+    () => fafIntro(), 'Place au duel des indices');
 }
 
 /* ═══════════════ MANCHE 3 — FACE-À-FACE ═══════════════ */
@@ -818,7 +827,7 @@ function fafIntro() {
   sfx.jingle();
   const [a, b] = e.faf.joueurs;
   carton({
-    icone: 'handshake', titre: e.faf.grandeFinale ? 'La Grande Finale' : 'Face-à-face',
+    icone: 'handshake', titre: e.faf.grandeFinale ? 'La Grande Finale' : 'Duel des indices',
     sous: `${nomDe(a)} contre ${nomDe(b)} — premier à ${RULES.POINTS_FAF} points.`,
     regles: [
       'Le thème est annoncé : celui qui a la main décide de la prendre… ou de la laisser à son adversaire.',
@@ -1079,7 +1088,7 @@ function finEmission(reprise) {
   scene('#stFin');
   $('#finTitre').textContent = `${nomDe(v)}, champion de l'émission !`;
   const f = e.faf;
-  $('#finSous').textContent = f ? `${f.scores[v] || 0} à ${f.scores[autre(v)] || 0} au face-à-face.`
+  $('#finSous').textContent = f ? `${f.scores[v] || 0} à ${f.scores[autre(v)] || 0} au duel des indices.`
     + (e.dernierProno?.length ? ` Bon pronostic : ${noms(e.dernierProno)} (+1 étoile).` : '') : '';
   renderClassementSoiree($('#finClassement'));
   if (!reprise) { sfx.win(); burst(160); }
@@ -1275,7 +1284,7 @@ $('#btnLiveNext')?.addEventListener('click', suivant);
 
 $('#btnCloreManche')?.addEventListener('click', () => {
   if (E()?.manche !== 'r1') return;
-  showConfirmModal('Clore les Neuf points gagnants maintenant ? Les places restantes vont aux meilleurs scores.',
+  showConfirmModal('Clore les Course aux points maintenant ? Les places restantes vont aux meilleurs scores.',
     () => r1Close(true), { okLabel: 'Clore la manche' });
 });
 

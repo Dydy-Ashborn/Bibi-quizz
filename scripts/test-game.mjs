@@ -146,13 +146,13 @@ t('manche 1 : barème télé 1/2/3 points et qualification à 9', () => {
   assert.equal(clo3.elimines.length, 0); assert.equal(clo3.qualifies.length, 3);
 });
 
-t('manche 2 : série, remise à zéro, 4 à la suite, classement', () => {
+t('manche 2 : rafale, points acquis, poursuite après quatre et classement', () => {
   let tr = { serie: 0, best: 0, tBest: null };
   tr = r2Reponse(tr, true, 3000); tr = r2Reponse(tr, true, 6000);
   tr = r2Reponse(tr, false, 9000);
-  assert.equal(tr.serie, 0); assert.equal(tr.best, 2); assert.equal(tr.tBest, 6000);
+  assert.equal(tr.serie, 2); assert.equal(tr.best, 2); assert.equal(tr.tBest, 6000);
   for (let i = 0; i < 4; i++) tr = r2Reponse(tr, true, 20000 + i);
-  assert.ok(tr.fini); assert.equal(tr.best, 4);
+  assert.equal(tr.fini, false); assert.equal(tr.best, 6);
   const cl = r2Classement({ a: { best: 2, tBest: 9000 }, b: { best: 3, tBest: 30000 }, c: { best: 2, tBest: 5000 } }, ['a', 'b', 'c']);
   assert.deepEqual(cl, ['b', 'c', 'a']);
 });

@@ -63,3 +63,8 @@ export function peutBuzzer(bc, moi) {
   if (bc.phase === PHASE.FAF_INDICES) return !!bc.faf && bc.faf.joueur === moi;
   return false;
 }
+
+/** Un instantané local vide n'est jamais la preuve d'une exclusion. */
+export function retraitConfirme(exists, metadata) {
+  return exists === false && metadata?.fromCache === false && metadata?.hasPendingWrites === false;
+}

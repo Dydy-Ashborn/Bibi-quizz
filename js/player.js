@@ -1,3 +1,4 @@
+import { revealQuestion } from './question-text.js';
 /* Bibi Quizz — manette téléphone : rejoindre → buzzer / taper / choisir → résultats.
  *
  * Le téléphone ne décide rien : il affiche le broadcast de l'écran maître (live.js)
@@ -8,13 +9,13 @@ import { $, $$, el, icon, iconHtml, esc, showScreen, toast, sfx, burst, initiale
          listeNoms, pluriel } from './util.js';
 import { COULEURS, BUZZERS, RULES } from './config.js';
 import { uid } from './firebase.js';
-import { loadGame, watchGame, watchPlayers, joinGame, myPlayer, sendBuzz, sendInput } from './store.js';
-import { PHASE, INPUT, peutBuzzer } from './live.js';
+import { loadGame, watchGame, watchPlayers, watchMyPlayer, joinGame, myPlayer, sendBuzz, sendInput } from './store.js';
+import { PHASE, INPUT, peutBuzzer, retraitConfirme } from './live.js';
 import { juger } from './game.js';
 import { themeById } from './data/questions.js';
 
 const P = {
-  code: null, me: null, players: [], bc: null, unsubs: [],
+  session: 0, code: null, me: null, players: [], bc: null, unsubs: [],
   timer: null, typo: null,
   buzzKey: null,       // `${seq}:${tour}` du dernier buzz envoyé
   envoye: null,        // `${seq}:${tour}` de la dernière réponse envoyée
@@ -22,6 +23,7 @@ const P = {
 };
 
 export function leavePlayer() {
+  P.session++;
   P.unsubs.forEach(u => { try { u(); } catch {} });
   P.unsubs = [];
   stopTimer(); stopTypo();
@@ -39,11 +41,15 @@ let sonChoisi = ls.get('bq.son', 'classique');
 export async function enterJoin(code) {
   leavePlayer();
   P.code = code;
+  const session = P.session;
+  const active = () => P.session === session;
   let game;
   try { game = await loadGame(code); } catch { game = null; }
+  if (!active()) return;
   if (!game) { toast('Aucune partie avec ce code.', 'err'); location.hash = '#/'; return; }
 
   const deja = await myPlayer(code).catch(() => null);
+  if (!active()) return;
   if (deja) { P.me = deja; enterPlay(); return; }
 
   $('#joinCode').textContent = code;
@@ -56,6 +62,7 @@ export async function enterJoin(code) {
   setTimeout(() => $('#inputName').focus(), 300);
 
   $('#btnJoinConfirm').onclick = async () => {
+    if (!active()) return;
     const name = $('#inputName').value.trim().replace(/\s+/g, ' ');
     if (name.length < 2) { toast('Ton prénom (2 lettres minimum).', 'err'); return; }
     const btn = $('#btnJoinConfirm');
@@ -63,6 +70,7 @@ export async function enterJoin(code) {
     try {
       const g = await loadGame(code);
       if (!g) { toast('La partie a été supprimée.', 'err'); location.hash = '#/'; return; }
+      if (!active()) return;
       const players = await new Promise(res => { const un = watchPlayers(code, ps => { un(); res(ps); }); });
       if (players.some(p => p.name.toLowerCase() === name.toLowerCase() && p.uid !== uid())) {
         toast('Ce prénom est déjà pris dans la partie.', 'err'); return;
@@ -74,6 +82,7 @@ export async function enterJoin(code) {
       const color = COULEURS.find(c => !pris.has(c)) || COULEURS[players.length % COULEURS.length];
       ls.set('bq.name', name);
       await joinGame(code, { name, color, son: sonChoisi });
+      if (!active()) return;
       P.me = { uid: uid(), name, color, son: sonChoisi };
       sfx.buzz(sonChoisi); vibre(40);
       enterPlay();
@@ -99,15 +108,29 @@ function enterPlay() {
   $('#playMe').innerHTML = '';
   $('#playMe').append(pawn(P.me), P.me.name);
   vue('wait', { titre: 'Tu es dans la partie !', ligne: "Regarde l'écran du maître du jeu." });
+  const session = P.session;
+  const active = () => P.session === session;
   P.unsubs.push(watchPlayers(P.code, ps => {
-    P.players = ps;
-    if (!ps.some(p => p.uid === uid())) {
+    if (active()) P.players = ps;
+  }));
+  P.unsubs.push(watchMyPlayer(P.code, (exists, metadata, error) => {
+    if (!active()) return;
+    if (error) { toast('Connexion interrompue. Reconnexion en cours…', 'info'); return; }
+    if (retraitConfirme(exists, metadata)) {
+      leavePlayer();
       toast('Tu as été retiré de la partie.', 'err');
       location.hash = '#/';
     }
   }));
-  P.unsubs.push(watchGame(P.code, g => {
-    if (!g) { toast('La partie a été supprimée.', 'err'); location.hash = '#/'; return; }
+  P.unsubs.push(watchGame(P.code, (g, error, metadata) => {
+    if (!active()) return;
+    if (error) { toast('Connexion interrompue. Reconnexion en cours…', 'info'); return; }
+    if (!g) {
+      if (retraitConfirme(false, metadata)) {
+        leavePlayer(); toast('La partie a été supprimée.', 'err'); location.hash = '#/';
+      }
+      return;
+    }
     // Le doc de partie change aussi à chaque sauvegarde de l'état de reprise : on ne
     // redessine que sur un NOUVEAU broadcast, sinon la saisie en cours serait effacée.
     if (g.bc && (!P.bc || g.bc.at !== P.bc.at || g.bc.seq !== P.bc.seq)) render(g.bc);
@@ -193,11 +216,9 @@ function render(bc) {
     case PHASE.R2_JEU:   renderR2Jeu(bc, nouvelle, prev); return;
     case PHASE.R2_FIN:
       stopTimer();
-      vue('wait', { icone: bc.r2?.quatre ? 'fire' : 'flag-checkered',
-        titre: bc.r2?.joueur === me ? (bc.r2.quatre ? '4 à la suite !' : `Ta meilleure série : ${bc.r2.best}`)
-                                     : `${nomDe(bc.r2?.joueur)} : ${bc.r2?.quatre ? '4 à la suite !' : 'série de ' + (bc.r2?.best || 0)}`,
-        ligne: 'Regarde l\'écran.' });
-      if (nouvelle && bc.r2?.joueur === me && bc.r2.quatre) { burst(90); vibre([60, 40, 60, 40, 120]); }
+      vue('wait', { icone: 'flag-checkered',
+        titre: `${bc.r2?.joueur === me ? 'Ton score' : nomDe(bc.r2?.joueur)} : ${bc.r2?.best || 0} points`,
+        ligne: 'Regarde l’écran.' });
       return;
 
     case PHASE.FAF_MAIN: renderFafMain(bc, nouvelle); return;
@@ -245,7 +266,7 @@ function statutCourt(bc) {
     if (bc.qualifies.includes(me)) return 'Qualifié !';
     return pluriel(bc.scores?.[me] || 0, 'point');
   }
-  if (bc.faf && bc.faf.joueurs?.includes(me)) return `Face-à-face : ${bc.faf.scores?.[me] || 0} / ${RULES.POINTS_FAF}`;
+  if (bc.faf && bc.faf.joueurs?.includes(me)) return `Duel des indices : ${bc.faf.scores?.[me] || 0} / ${RULES.POINTS_FAF}`;
   return '';
 }
 
@@ -273,7 +294,7 @@ function renderR1(bc, nouvelle, inscrit) {
     if (nouvelle) typewriter(texte, bc.q.depuis, bc.q.cps);
   } else {
     stopTypo();
-    $('#pBuzzQ').textContent = texte.slice(0, bc.q.depuis) + (bc.q.depuis < texte.length ? '…' : '');
+    revealQuestion($('#pBuzzQ'), texte, bc.q.depuis);
   }
   const btn = $('#btnBuzz');
   const peut = peutBuzzer(bc, me);
@@ -295,7 +316,7 @@ function typewriter(texte, depuis, cps) {
   stopTypo();
   const node = $('#pBuzzQ');
   let n = depuis || 0;
-  const draw = () => { node.innerHTML = esc(texte.slice(0, n)) + (n < texte.length ? '<span class="caret"></span>' : ''); };
+  const draw = () => revealQuestion(node, texte, n);
   draw();
   if (!cps || n >= texte.length) return;
   P.typo = setInterval(() => { n += 1; draw(); if (n >= texte.length) stopTypo(); }, 1000 / cps);
@@ -401,7 +422,7 @@ function renderR2Choix(bc, nouvelle) {
   if (r2.joueur !== me) {
     stopTimer();
     vue('wait', { icone: 'layer-group', titre: `${nomDe(r2.joueur)} ${r2.theme ? 'joue sur « ' + r2.theme + ' »' : 'choisit son thème'}`,
-                  ligne: `4 à la suite : ${bc.reponses === 'oral' ? 40 : 60} secondes pour enchaîner 4 bonnes réponses.` });
+                  ligne: `Rafale chrono : ${bc.reponses === 'oral' ? 40 : 60} secondes pour enchaîner 4 bonnes réponses.` });
     return;
   }
   if (r2.theme) {
@@ -427,7 +448,7 @@ function renderR2Jeu(bc, nouvelle, prev) {
   const r2 = bc.r2 || {};
   if (r2.joueur !== me) {
     vue('wait', { icone: 'fire', titre: `${nomDe(r2.joueur)} — « ${r2.theme} »`,
-                  ligne: `Série : ${r2.serie} · meilleure : ${r2.best}` });
+                  ligne: `Score : ${r2.best}` });
     return;
   }
   // L'écran renvoie le temps restant à chaque question : le chrono local se recale.
@@ -436,11 +457,11 @@ function renderR2Jeu(bc, nouvelle, prev) {
                  kind: 'r2', garder: false, passer: true });
   const lamps = $('#pLampes');
   lamps.innerHTML = '';
-  for (let i = 1; i <= RULES.SERIE_R2; i++) lamps.append(el('span', { class: 'lampe' + (i <= r2.serie ? ' is-on' : '') }));
-  $('#pBest').textContent = `Meilleure série : ${r2.best}`;
+  lamps.hidden = true;
+  $('#pBest').textContent = `Score : ${r2.best}`;
 }
 
-/* ── Face-à-face ─────────────────────────────────────────────────────── */
+/* ── Duel des indices ─────────────────────────────────────────────────────── */
 function renderFafMain(bc, nouvelle) {
   const me = moi();
   const f = bc.faf || {};
@@ -537,8 +558,8 @@ function renderProno(faf) {
     sfx.tap(); vibre(30);
     renderProno(faf);
   } }, nomDe(u))));
-  $('#pPronoLigne').textContent = choisi ? `Ton prono : ${nomDe(choisi)}. Tu peux changer tant que le face-à-face n'a pas commencé.`
-    : 'Qui va gagner le face-à-face ? Un bon prono = +1 étoile.';
+  $('#pPronoLigne').textContent = choisi ? `Ton prono : ${nomDe(choisi)}. Tu peux changer tant que le duel des indices n'a pas commencé.`
+    : 'Qui va gagner le duel des indices ? Un bon prono = +1 étoile.';
 }
 
 $('#pWaitTest')?.addEventListener('pointerdown', e => { e.preventDefault(); sfx.buzz(P.me?.son); vibre(60); });

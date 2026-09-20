@@ -88,7 +88,7 @@ export async function loadGame(code) {
 }
 
 export function watchGame(code, cb) {
-  return onSnapshot(gameRef(code), s => cb(s.exists() ? s.data() : null),
+  return onSnapshot(gameRef(code), { includeMetadataChanges: true }, s => cb(s.exists() ? s.data() : null, null, s.metadata),
     err => { console.warn('[bibi-quizz] watchGame', err); cb(null, err); });
 }
 
@@ -132,6 +132,11 @@ export async function joinGame(code, { name, color, son }) {
     tx.set(subDoc(code, 'players', uid()), { name, color, son, joinedAt: serverTimestamp() }, { merge: true });
   });
   return uid();
+}
+
+export function watchMyPlayer(code, cb) {
+  return onSnapshot(subDoc(code, 'players', uid()), { includeMetadataChanges: true },
+    s => cb(s.exists(), s.metadata), err => cb(null, null, err));
 }
 
 export async function myPlayer(code) {

@@ -15,7 +15,7 @@ export const firebaseConfig = {
 
 /* Réglages de jeu — seul endroit où vivent les constantes de rythme et de barème. */
 export const RULES = {
-  /* ── Manche 1 : Neuf points gagnants ── */
+  /* ── Manche 1 : Course aux points ── */
   POINTS_R1: 9,              // score de qualification
   QUALIFIES_R1: 3,           // qualifiés à partir de 4 joueurs
   LECTURE_CPS: 17,           // vitesse d'affichage de la question (caractères / s)
@@ -24,13 +24,12 @@ export const RULES = {
   FENETRE_BUZZ_MS: 350,      // on attend ce délai après le 1er buzz reçu pour départager les quasi-simultanés
   MAX_QUESTIONS_R1: 55,      // garde-fou : au-delà, qualification au score
 
-  /* ── Manche 2 : 4 à la suite ── */
-  SERIE_R2: 4,
-  SECONDES_R2: 60,           // 40 s à la télé, où l'on répond à l'oral ; ici on tape au téléphone
+  /* ── Manche 2 : Rafale chrono ── */
+  SECONDES_R2: 60,           // 60 s au clavier ; 40 s en mode oral
   SECONDES_CHOIX_THEME: 25,
   THEMES_PROPOSES: 4,
 
-  /* ── Manche 3 : Face-à-face ── */
+  /* ── Manche 3 : Duel des indices ── */
   POINTS_FAF: 12,
   FAF_POINTS_MAX: 4,         // 4 points au 1er indice, puis 3, 2, 1
   SECONDES_PAR_INDICE: 6,

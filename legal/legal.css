@@ -1,0 +1,24 @@
+:root{color-scheme:light;--ink:#17243f;--muted:#526077;--line:#dce4ee;--accent:#174f93}*{box-sizing:border-box}body{margin:0;background:#f4f7fb;color:var(--ink);font:16px/1.7 system-ui,sans-serif}header,main,footer{max-width:880px;margin:auto;padding:24px}header{display:flex;justify-content:space-between;gap:20px;align-items:center}.brand{font-size:23px;font-weight:850;letter-spacing:-1px;text-decoration:none}.brand span{color:#196772}a{color:var(--accent);text-underline-offset:3px}main{background:white;border:1px solid var(--line);border-radius:18px;padding:38px;margin-bottom:20px}h1{font-size:clamp(28px,5vw,42px);line-height:1.15;letter-spacing:-1px;margin:8px 0 20px}h2{font-size:21px;margin:32px 0 10px}h3{font-size:17px}p{margin:10px 0 16px}.meta{font-size:13px;color:var(--muted)}nav,footer{display:flex;gap:18px;flex-wrap:wrap;font-size:14px}.notice{padding:16px;background:#fff4db;border-left:4px solid #c48312;color:#67490e}.guarantee{border:2px solid var(--ink);padding:22px;margin:24px 0}.guarantee p{font-size:14px}table{width:100%;border-collapse:collapse;font-size:14px}td,th{border-bottom:1px solid var(--line);text-align:left;padding:12px 8px;vertical-align:top}dt{font-weight:700}dd{margin:0 0 12px;color:var(--muted)}[data-seller]:empty::after{content:'À compléter avant ouverture des ventes';color:#8d4d00}button,.button{display:inline-block;font:600 15px system-ui;padding:12px 18px;border:1px solid #174f93;border-radius:8px;background:#174f93;color:white;cursor:pointer;text-decoration:none}button:disabled{opacity:.6;cursor:wait}label{display:block;font-weight:650;margin:20px 0 6px}input,textarea,select{display:block;width:100%;padding:12px;font:inherit;border:1px solid #8997ab;border-radius:7px}input[type=checkbox]{width:auto;display:inline;margin-right:10px}textarea{min-height:110px}.check{font-size:14px;font-weight:400}.error{color:#a51a2c}pre{white-space:pre-wrap;overflow-wrap:anywhere;font:14px/1.6 system-ui;background:#f4f7fb;padding:18px}[hidden]{display:none!important}:focus-visible{outline:3px solid #db9d22;outline-offset:3px}@media(max-width:600px){header,footer{padding:18px}main{margin:0 12px 20px;padding:24px 20px}header{align-items:start;flex-wrap:wrap}table{font-size:12px}}@media print{body{background:white}header,footer,.print-button,.no-print{display:none!important}main{border:0;padding:0;max-width:none}a{color:inherit}h2,h3{break-after:avoid}.guarantee{break-inside:auto}}
+
+/* Même identité que le plateau : bleu profond et doré. */
+:root{color-scheme:dark;--ink:#f6fbff;--muted:#b9cadc;--line:#ffffff24;--accent:#ffcc1a}
+body{background:radial-gradient(ellipse at 85% 0%,#1859bc,transparent 55%),#021447;font-family:'Outfit',system-ui,sans-serif;min-height:100vh}
+header{padding-top:32px;padding-bottom:32px}
+.brand{font-size:30px;font-weight:900;letter-spacing:-1.5px;color:#fff}
+.brand span{color:var(--accent)}.brand span::after{content:'.';color:#ff827a}
+header>a:last-child{font-size:14px;border:1px solid var(--line);padding:8px 16px;border-radius:999px;text-decoration:none}
+main{background:linear-gradient(145deg,#0d3692,#03206b);box-shadow:0 24px 70px #00000030;border-radius:24px}
+h1{font-weight:900;letter-spacing:-1.5px;max-width:720px}
+h2{color:#fff1a6;border-top:1px solid var(--line);padding-top:24px}
+.meta{letter-spacing:.03em}.notice{background:#ff827a12;border-color:#ff827a;color:#ffd0ca;border-radius:0 10px 10px 0}
+.guarantee{border-color:#ffcc1a66;border-radius:14px;background:#02144755}
+pre{background:#021447;border:1px solid var(--line);border-radius:12px;color:var(--ink)}
+button,.button{background:linear-gradient(135deg,#fff1a6,#ffcc1a);border:0;color:#3a1600;border-radius:999px;box-shadow:0 3px 0 #b35300;transition:filter .2s,transform .2s}
+button:hover,.button:hover{filter:brightness(1.06)}button:active,.button:active{transform:translateY(2px)}
+input,textarea,select{background:#021447;color:var(--ink);border-color:#7995a866}
+input:focus,textarea:focus{border-color:var(--accent)}[data-seller]:empty::after{color:#ffd0ca}
+:focus-visible{outline-color:var(--accent)}footer{border-top:1px solid var(--line);padding-bottom:40px}
+.legal-toc{display:flex;gap:8px 16px;margin:24px 0;padding:18px;background:#02144755;border-radius:12px}
+.legal-toc a{font-size:13px}
+@media(max-width:600px){header{padding:22px 18px}.brand{font-size:25px}main{padding:26px 20px}h1{font-size:32px}.print-button{font-size:13px}td,th{overflow-wrap:anywhere}}
+@media print{:root{color-scheme:light;--ink:#17243f;--muted:#526077;--line:#dce4ee;--accent:#174f93}body,main{background:white;color:#17243f;box-shadow:none}.legal-toc{display:none}h2{color:#17243f}.notice{color:#67490e;background:#fff4db}pre,.guarantee{background:white;color:#17243f}}
