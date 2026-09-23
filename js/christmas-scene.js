@@ -1,8 +1,9 @@
+import { SITE_THEME } from './site-config.js';
+
 const reduced = matchMedia('(prefers-reduced-motion: reduce)');
 let active = false, raf = 0, last = 0, width = 0, height = 0, canvas, ctx, particles = [];
-let enabled = true, festive = false, gameChristmas = false;
-try { festive = localStorage.getItem('bq.theme') === 'noel'; } catch {}
-export const isChristmasTheme = () => festive;
+let enabled = true, gameChristmas = false;
+const festive = SITE_THEME === 'noel';
 try { enabled = localStorage.getItem('bq.christmas.effects') !== 'off'; } catch {}
 const santa = '<svg viewBox="0 0 160 180" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="santaCoat"><stop stop-color="#f87472"/><stop offset="1" stop-color="#ac243d"/></radialGradient></defs><ellipse cx="80" cy="155" rx="58" ry="20" fill="#000" opacity=".18"/><path d="M33 135Q33 91 80 90Q127 91 127 135L120 162H40Z" fill="url(#santaCoat)"/><rect x="35" y="137" width="90" height="13" rx="6" fill="#17273d"/><rect x="70" y="135" width="22" height="18" rx="3" fill="#ffda79"/><rect x="76" y="140" width="10" height="8" fill="#17273d"/><ellipse cx="80" cy="86" rx="39" ry="45" fill="#fff5e2"/><ellipse cx="80" cy="70" rx="30" ry="27" fill="#f5c3a6"/><path d="M43 55Q50 -8 118 28L109 52Z" fill="url(#santaCoat)"/><path d="M43 53Q77 41 115 53" fill="none" stroke="#fff" stroke-width="14" stroke-linecap="round"/><circle cx="119" cy="27" r="11" fill="#fff"/><circle cx="69" cy="69" r="3" fill="#17273d"/><circle cx="91" cy="69" r="3" fill="#17273d"/><ellipse cx="80" cy="80" rx="7" ry="5" fill="#e99386"/><path d="M64 88Q80 101 96 88" fill="none" stroke="#b95956" stroke-width="3" stroke-linecap="round"/><path d="M36 112L21 90M124 112L140 92" stroke="#df5261" stroke-width="17" stroke-linecap="round"/><circle cx="19" cy="85" r="10" fill="#fff5e2"/><circle cx="143" cy="86" r="10" fill="#fff5e2"/></svg>';
 function create() {
@@ -72,10 +73,6 @@ export function setChristmas(value) {
 function applyTheme() {
   active = festive || gameChristmas;
   document.body.classList.toggle('theme-noel', festive);
-  document.querySelectorAll('[data-theme-switch]').forEach(button => {
-    button.textContent = festive ? '☀ Thème classique' : '🎄 Thème Noël';
-    button.setAttribute('aria-pressed', String(festive));
-  });
   document.body.classList.toggle('is-christmas', active);
   if (active) create();
   sync();
@@ -91,10 +88,4 @@ document.querySelectorAll('.gift').forEach(node => {
   }
 });
 
-document.addEventListener('click', event => {
-  if (!event.target.closest('[data-theme-switch]')) return;
-  festive = !festive;
-  try { localStorage.setItem('bq.theme', festive ? 'noel' : 'standard'); } catch {}
-  applyTheme();
-});
 applyTheme();

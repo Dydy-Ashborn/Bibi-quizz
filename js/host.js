@@ -85,7 +85,7 @@ const secondesR2 = () => S.game?.event === 'noel' ? (S.game.roundSeconds || 45) 
 const secondesReponse = () => S.game?.event === 'noel' ? (S.game.answerSeconds || 12) : RULES.SECONDES_REPONSE;
 
 export function enterCreate(requestedEvent = 'standard') {
-  choix.format = isPremium() ? 'soiree' : 'emission'; choix.ton = 'mix'; choix.reponses = 'oral'; choix.event = requestedEvent === 'noel' && isPremium() ? 'noel' : 'standard';
+  choix.format = isPremium() ? 'soiree' : 'emission'; choix.ton = 'mix'; choix.reponses = 'oral'; choix.event = requestedEvent === 'noel' && isPremium() && guard('event', 'noel').ok ? 'noel' : 'standard';
   $$('#createForm .choice-grid').forEach(grid => {
     const field = grid.dataset.field;
     $$('.choice', grid).forEach(c => {
@@ -100,7 +100,7 @@ export function enterCreate(requestedEvent = 'standard') {
   $('#planBannerLine').textContent = ' — ' + r.ligne;
   updateEventPreview();
   showScreen('screen-create');
-  if (requestedEvent === 'noel' && !isPremium()) openPaywall(guard('event', 'noel').why);
+  if (requestedEvent === 'noel' && guard('event', 'noel').why && !isPremium()) openPaywall(guard('event', 'noel').why);
 }
 
 $$('#createForm .choice-grid').forEach(grid => $$('.choice', grid).forEach(c => c.addEventListener('click', () => {

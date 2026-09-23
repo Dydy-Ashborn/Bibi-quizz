@@ -23,7 +23,7 @@ vm.runInNewContext(fs.readFileSync('sw.js','utf8'),context);
 handlers.install({waitUntil:p=>install=p});await install;
 assert.ok(storage.has('./js/pwa.js'));
 handlers.activate({waitUntil:p=>install=p});await install;
-assert.deepEqual(deleted,['bibi-quizz-v1']);
+assert.deepEqual(deleted,['bibi-quizz-v1','bibi-quizz-v10']);
 online=false;
 async function request(path,mode='navigate'){
  let result;

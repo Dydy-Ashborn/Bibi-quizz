@@ -1,4 +1,5 @@
 import { CHRISTMAS_POOL } from './data/christmas.js';
+import { SITE_THEME } from './site-config.js';
 /* Bibi Quizz — point de contrôle unique du plan (gratuit / complet).
  *
  * Même modèle que Bibi Love et Attention à l'escalier : achat unique, attaché à
@@ -93,6 +94,8 @@ export async function attendrePaiement({ essais = 8, delai = 2000 } = {}) {
  * @returns {{ok:boolean, why?:string}} `why` est le texte affiché dans le paywall.
  */
 export function guard(feature, value) {
+  if (feature === 'event' && value === 'noel' && SITE_THEME !== 'noel')
+    return { ok: false, why: 'Le Quiz de Noël sera disponible pendant l’événement de Noël.' };
   if (cache) return { ok: true };
   switch (feature) {
     case 'event':
@@ -120,6 +123,7 @@ export function maxJoueurs() {
 /** Le même pack découverte est utilisé à chaque partie gratuite. */
 export function pools(event = 'standard') {
   if (event === 'noel') {
+    if (SITE_THEME !== 'noel') throw new Error('Le Quiz de Noël est indisponible hors de son événement.');
     if (!cache) throw new Error('Le Quiz de Noël nécessite la version complète.');
     return CHRISTMAS_POOL;
   }

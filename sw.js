@@ -7,12 +7,12 @@
  * On ne touche qu'aux GET de notre origine : intercepter le SDK Firebase lui ferait
  * recevoir index.html à la place d'un module (« MIME type text/html »).
  */
-const VERSION = 'v10';
+const VERSION = 'v11';
 const CACHE   = 'bibi-quizz-' + VERSION;
 
 const SHELL = [
-  './', './index.html', './css/style.css?v=10',
-  './js/pwa.js', './js/christmas-scene.js', './js/event-config.js', './js/data/christmas.js', './js/discovery.js', './js/entry.js', './js/app.js', './js/host.js', './js/player.js', './js/store.js', './js/game.js',
+  './', './index.html', './css/style.css?v=11',
+  './js/pwa.js', './js/site-config.js', './js/christmas-scene.js', './js/event-config.js', './js/data/christmas.js', './js/discovery.js', './js/entry.js', './js/app.js', './js/host.js', './js/player.js', './js/store.js', './js/game.js',
   './js/legal-config.js', './legal/cgv.html', './legal/cgu.html', './legal/mentions.html', './legal/retractation.html', './legal/legal.css?v=8', './legal/page.js?v=7', './legal/withdrawal.js', './js/question-text.js', './js/util.js', './js/firebase.js', './js/config.js', './js/plan.js', './js/live.js',
   './js/data/questions.js', './js/data/extension.js',
   './manifest.webmanifest', './icons/bibi-mark.svg', './icons/bibi-180.png', './icons/bibi-192.png', './icons/bibi-512.png', './icons/bibi-maskable-512.png',

@@ -635,8 +635,7 @@ body:has(#screen-play.is-active) #christmasEffects{font-size:10px;padding:8px 10
 @media(max-height:600px) and (max-width:900px){.play-head{padding-top:0}.buzzer{--size:min(40vw,32dvh,180px)}.play-body>div{gap:6px}.p-question{font-size:17px}.p-wait-icon{width:54px;height:54px;font-size:25px}}
 
 /* Édition de Noël : habillage du site, indépendant de la partie. */
-.theme-switch{border:1px solid #ffffff50;background:#ffffff0d;color:var(--blanc);border-radius:99px;padding:10px 16px;font:700 13px var(--font);cursor:pointer}
-body:not(.theme-noel) .christmas-banner,body:not(.theme-noel) .christmas-picker{display:none}
+body:not(.theme-noel) .christmas-banner,body:not(.theme-noel) .christmas-picker,body:not(.theme-noel) .christmas-feature{display:none}
 .is-christmas{--nuit:#071f17;--bleu-900:#103f2b;--bleu-800:#135236;--bleu-700:#286341;--bleu-600:#23754b;--bleu-500:#349861;--ciel:#91dfad;--glace:#e3f6e6;--gris:#bad7c3;--surface:#123b2a;--bord:#9ed1ad50;--or:#ffd779;--orange:#d43640;--accent-shadow:#821c2c;--accent-ink:#3e1017}
 body.is-christmas,body.is-christmas:has(#screen-home.is-active)::before,body.is-christmas::before{background:radial-gradient(ellipse at 95% 0%,#8a213b90,transparent 55%),radial-gradient(ellipse at 0% 45%,#23633d80,transparent 70%),linear-gradient(125deg,#062b1c,#10261e 65%,#301521)}
 .is-christmas .card,.is-christmas .home-join-strip,.is-christmas .hero-stage,.is-christmas .mini-desk,.is-christmas .demo-card,.is-christmas .podium,.is-christmas .oral-controls{background:linear-gradient(135deg,#24543d,#102d22);border-color:#d9b87866}
@@ -658,5 +657,5 @@ body.is-christmas,body.is-christmas:has(#screen-home.is-active)::before,body.is-
 @keyframes reindeerGallop{50%{transform:rotate(-7deg)}}
 @keyframes christmasRibbon{to{background-position:140% 0}}
 .christmas-still .christmas-banner::before,.christmas-still .santa-sleigh,.christmas-still .reindeer{animation:none}
-@media(max-width:640px){.home-nav{gap:8px;flex-wrap:wrap;height:auto;min-height:82px;padding:14px 0}.theme-switch{font-size:11px;padding:8px 10px}.is-christmas .christmas-banner{padding:28px 23px;gap:12px}.christmas-banner h2{font-size:43px}.christmas-globe{width:190px;height:190px}.christmas-banner .eyebrow{font-size:9px}.is-christmas .christmas-banner .santa{width:125px;left:30px}.is-christmas .christmas-banner .globe-base{bottom:-10px}}
+@media(max-width:640px){.home-nav{gap:8px;flex-wrap:wrap;height:auto;min-height:82px;padding:14px 0}.is-christmas .christmas-banner{padding:28px 23px;gap:12px}.christmas-banner h2{font-size:43px}.christmas-globe{width:190px;height:190px}.christmas-banner .eyebrow{font-size:9px}.is-christmas .christmas-banner .santa{width:125px;left:30px}.is-christmas .christmas-banner .globe-base{bottom:-10px}}
 @media(prefers-reduced-motion:reduce){.christmas-banner::before,.santa-sleigh,.reindeer{animation:none!important}}
