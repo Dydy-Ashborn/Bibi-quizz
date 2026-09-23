@@ -1,3 +1,4 @@
+import '../js/christmas-scene.js';
 import { SELLER, sellerComplete } from '../js/legal-config.js';
 for (const node of document.querySelectorAll('[data-seller]')) node.textContent = SELLER[node.dataset.seller] || 'À compléter avant ouverture des ventes';
 for (const node of document.querySelectorAll('[data-contact]')) {

@@ -1,3 +1,4 @@
+import { setChristmas } from './christmas-scene.js';
 import { revealQuestion } from './question-text.js';
 /* Bibi Quizz — manette téléphone : rejoindre → buzzer / taper / choisir → résultats.
  *
@@ -23,6 +24,7 @@ const P = {
 };
 
 export function leavePlayer() {
+  setChristmas(false);
   P.session++;
   P.unsubs.forEach(u => { try { u(); } catch {} });
   P.unsubs = [];
@@ -131,6 +133,7 @@ function enterPlay() {
       }
       return;
     }
+    setChristmas(g.event === 'noel');
     // Le doc de partie change aussi à chaque sauvegarde de l'état de reprise : on ne
     // redessine que sur un NOUVEAU broadcast, sinon la saisie en cours serait effacée.
     if (g.bc && (!P.bc || g.bc.at !== P.bc.at || g.bc.seq !== P.bc.seq)) render(g.bc);

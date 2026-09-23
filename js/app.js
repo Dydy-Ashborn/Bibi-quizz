@@ -23,6 +23,7 @@ async function route() {
   leaveHost(); leavePlayer();
   if (hash.startsWith('#/j/'))    { await enterJoin(nettoie(hash.slice(4))); return; }
   if (hash.startsWith('#/host/')) { await enterLobby(nettoie(hash.slice(7))); return; }
+  if (hash === '#/noel') { enterCreate('noel'); return; }
   if (hash === '#/create') { enterCreate(); return; }
   if (hash === '#/compte') { enterCompte(); return; }
   renderHistory();

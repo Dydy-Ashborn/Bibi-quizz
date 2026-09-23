@@ -4,7 +4,7 @@ const status = document.querySelector('#installStatus');
 const standalone = window.matchMedia('(display-mode: standalone)');
 let promptEvent = null;
 const installed = () => standalone.matches || navigator.standalone === true;
-function render() { button.hidden = installed(); }
+function render() { button.hidden = installed(); button.closest('.install-bar').hidden = installed(); }
 render();
 standalone.addEventListener('change', render);
 window.addEventListener('beforeinstallprompt', event => {
@@ -42,3 +42,12 @@ if ('serviceWorker' in navigator && window.isSecureContext) {
   if (document.readyState === 'complete') register();
   else window.addEventListener('load', register, { once: true });
 }
+
+// Safari/iOS : la hauteur visible change avec les barres et le clavier.
+function syncViewport() {
+  const height = window.visualViewport?.height || window.innerHeight;
+  document.documentElement.style.setProperty('--app-height', Math.round(height) + 'px');
+}
+syncViewport();
+window.addEventListener('resize', syncViewport);
+window.visualViewport?.addEventListener('resize', syncViewport);

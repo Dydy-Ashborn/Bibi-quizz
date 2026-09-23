@@ -1,3 +1,4 @@
+import './christmas-scene.js';
 import { BUZZ, CATEGORIES, THEMES, FAF } from './data/questions.js';
 import { DISCOVERY } from './discovery.js';
 import { shuffle, juger } from './game.js';

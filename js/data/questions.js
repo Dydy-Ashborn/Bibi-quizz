@@ -1,3 +1,4 @@
+import { CHRISTMAS_BUZZ, CHRISTMAS_THEMES, CHRISTMAS_FAF } from './christmas.js';
 import { EXTRA_CATEGORIES, EXTRA_BUZZ } from './extension.js';
 /* Bibi Quizz — banque de questions (données seules, aucune logique).
  *
@@ -853,9 +854,9 @@ export const FAF = [
 Object.assign(CATEGORIES, EXTRA_CATEGORIES);
 BUZZ.push(...EXTRA_BUZZ);
 
-export const byId = Object.fromEntries(BUZZ.map(q => [q.id, q]));
-export const themeById = Object.fromEntries(THEMES.map(t => [t.id, t]));
-export const fafById = Object.fromEntries(FAF.map(q => [q.id, q]));
+export const byId = Object.fromEntries([...BUZZ, ...CHRISTMAS_BUZZ].map(q => [q.id, q]));
+export const themeById = Object.fromEntries([...THEMES, ...CHRISTMAS_THEMES].map(t => [t.id, t]));
+export const fafById = Object.fromEntries([...FAF, ...CHRISTMAS_FAF].map(q => [q.id, q]));
 
 /** Ère d'une question BUZZ (via sa catégorie). */
 export const ereDe = q => (CATEGORIES[q.c] || {}).ere || 'classique';

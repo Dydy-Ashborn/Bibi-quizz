@@ -16,7 +16,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@1,800;1,900&family=Outfit:wght@400;600;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="vendor/fontawesome/fa.css">
-<link rel="stylesheet" href="css/style.css?v=8">
+<link rel="stylesheet" href="css/style.css?v=10">
 </head>
 <body>
 
@@ -39,9 +39,13 @@
   <div class="home-shell">
     <nav class="home-nav" aria-label="Navigation principale">
       <a href="#/" class="wordmark">Bibi<span>Quizz.</span></a>
-      <span class="nav-edition">LE QUIZ QUI RÉUNIT TOUT LE MONDE</span>
+      <button class="theme-switch" type="button" data-theme-switch aria-pressed="false">🎄 Thème Noël</button>
       <button class="btn btn-ghost btn-sm" data-goto="#/compte">Mon compte <i class="fa fa-arrow-right"></i></button>
     </nav>
+    <section class="christmas-banner" aria-label="Événement Quiz de Noël">
+      <div><p class="eyebrow">ÉVÉNEMENT BIBI QUIZZ · ÉDITION NOËL</p><h2>Le grand quiz<br>de Noël !</h2><p>128 questions 100 % Noël. Réunis ta tribu, règle le chrono et fais sonner les buzzers ! Inclus dans la version complète.</p><button class="btn btn-gold" data-goto="#/noel">Découvrir le Quiz de Noël →</button></div>
+      <div class="christmas-globe" aria-hidden="true"><span class="globe-stars">✦ · ✧ · ✦</span><span class="santa">🎅</span><span class="gift gift-one">🎁</span><span class="gift gift-two">🎁</span><span class="globe-base"></span></div>
+    </section>
     <div id="connectionNotice" class="connection-notice" role="status" hidden>Le multijoueur est indisponible pour le moment. Tu peux essayer le quiz en solo. <button onclick="location.reload()">Réessayer</button></div>
     <div class="home-hero">
       <div class="hero-copy">
@@ -73,6 +77,7 @@
       <div class="join-inline"><input id="inputJoinCode" class="input input-code" maxlength="5" placeholder="CODE" autocomplete="off" spellcheck="false" aria-label="Code de la partie"><button id="btnGoJoin" class="btn btn-blue">Rejoindre <i class="fa fa-arrow-right"></i></button></div>
     </div>
     <div id="homeHistory" class="history" hidden><h2 class="section-title">Tes dernières parties</h2><div id="homeHistoryList" class="history-list"></div></div>
+
     <section class="home-categories" aria-labelledby="categoriesTitle"><div class="section-heading"><div><p class="eyebrow">LA CULTURE G, SANS LES ŒILLÈRES</p><h2 id="categoriesTitle">De la mythologie à ta playlist.</h2></div><span id="categoryCount"></span></div><div id="categoryChips" class="category-chips"></div><p id="homeStats" class="card-sub"></p></section>
     <section class="home-rounds" aria-labelledby="roundsTitle"><div class="section-heading"><div><p class="eyebrow">TROIS MANCHES. UN CHAMPION.</p><h2 id="roundsTitle">Les réflexes, la rafale, le duel.</h2></div></div>
       <div class="round-grid"><article><span class="round-number">01</span><h3>Course aux points</h3><p>Buzze avant les autres, réponds et décroche ta place pour la suite.</p><span class="round-tag">LE PLUS RAPIDE A LA MAIN</span></article><article><span class="round-number">02</span><h3>Rafale chrono</h3><p>Choisis ton thème. Chaque bonne réponse vaut un point. Les erreurs ne retirent rien : marque le maximum avant la fin du chrono.</p><span class="round-tag">40 S À L’ORAL · 60 S AU CLAVIER</span></article><article><span class="round-number">03</span><h3>Le duel des indices</h3><p>Prendre ou laisser la main ? Des indices, des zones à 4, 3, 2, 1 points. Premier à 12 !</p><span class="round-tag">LE DUEL FINAL</span></article></div>
@@ -115,6 +120,21 @@
       <h1 class="bar-title">Nouvelle émission</h1>
     </header>
 
+    <div class="card christmas-picker">
+      <p class="eyebrow">LES ÉVÉNEMENTS BIBI</p>
+      <h2 class="card-title">Choisis ton ambiance</h2>
+      <div class="choice-grid" data-field="event">
+        <button class="choice is-on" data-value="standard"><span class="choice-label">Le grand quiz</span><span class="choice-hint">Toutes les cultures, toutes les générations.</span></button>
+        <button class="choice" data-value="noel"><span class="choice-label">🎄 Quiz de Noël</span><span class="choice-hint">128 questions et énigmes de Noël · inclus dans la version complète.</span></button>
+      </div>
+      <div id="christmasSettings" hidden>
+        <p class="card-sub">Trois manches 100 % Noël. Choisis ci-dessous la durée globale indicative avec le format, puis règle tes chronos.</p>
+        <div class="christmas-timers">
+          <label>Délai après le buzzer<select id="christmasAnswer"><option value="8">8 secondes · rapide</option><option value="12" selected>12 secondes · classique</option><option value="20">20 secondes · tranquille</option></select></label>
+          <label>Chrono par candidat en rafale<select id="christmasRound"><option value="30">30 secondes</option><option value="45" selected>45 secondes</option><option value="60">60 secondes</option><option value="90">90 secondes</option></select></label>
+        </div>
+      </div>
+    </div>
     <div class="card">
       <h2 class="card-title"><i class="fa fa-stopwatch"></i> Format</h2>
       <div class="choice-grid choice-grid-3" data-field="format">
@@ -133,7 +153,7 @@
 
     <div class="card">
       <h2 class="card-title"><i class="fa fa-sliders"></i> Ton de la soirée</h2>
-      <div class="choice-grid choice-grid-3" data-field="ton">
+      <div class="choice-grid choice-grid-3" data-field="ton" id="toneChoices">
         <button class="choice" data-value="classique">
           <span class="choice-label">Classique</span><span class="choice-hint">Histoire, géo, sciences, arts, chanson…</span>
         </button>
@@ -424,6 +444,7 @@
     <h2 class="paywall-title">Version complète</h2>
     <p id="paywallWhy" class="paywall-why"></p>
     <ul class="paywall-list">
+      <li>🎄 Quiz de Noël inclus : 128 questions et énigmes, sans supplément</li>
       <li><i class="fa fa-circle-check"></i> <strong>Toute la banque</strong> : 1 672 questions, 50 thèmes et 160 énigmes</li>
       <li><i class="fa fa-circle-check"></i> Les <strong>soirées de 45 min–1 h</strong>, le marathon et tous les tons</li>
       <li><i class="fa fa-circle-check"></i> Jusqu'à <strong>8 candidats</strong></li>

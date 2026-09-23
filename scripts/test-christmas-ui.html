@@ -1,0 +1,27 @@
+<!doctype html><html lang="fr"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><link rel="stylesheet" href="../css/style.css?v=10"><link rel="stylesheet" href="../vendor/fontawesome/fa.css"><title>Test local Noël / iPhone</title><body>
+<script type="module">
+import { $, $$, el, icon, showScreen } from '../js/util.js';
+const html=new DOMParser().parseFromString(await(await fetch('../index.html')).text(),'text/html');
+html.querySelectorAll('script').forEach(n=>n.remove());
+document.body.append(...html.body.children);
+const { setChristmas }=await import('../js/christmas-scene.js');
+await import('../js/pwa.js');
+const source=await(await fetch('../js/host.js')).text();
+const createCode=source.slice(source.indexOf('const choix ='),source.indexOf('/* ═══════════════ SALON'));
+const preview=source.slice(source.indexOf('function updateEventPreview()'));
+const panel=new Function('$','$$','el','icon','showScreen','setChristmas','isPremium','guard','planResume','sfx','openPaywall','createGame','toast','RULES','S',createCode.replace('export function','function')+'\n'+preview+'\nreturn {enterCreate};');
+const api=panel($,$$,el,icon,showScreen,setChristmas,()=>true,()=>({ok:true}),()=>({titre:'Test local',ligne:'Sans Firebase'}),{tap(){},good(){}},()=>{},async cfg=>{
+ const status=document.createElement('output');
+ status.id='testCaptured';status.textContent='Configuration capturée : '+JSON.stringify(cfg);
+ document.body.prepend(status);
+ return {code:'TEST'};
+},()=>{},{SECONDES_R2:60,SECONDES_REPONSE:12},{});
+if(new URLSearchParams(location.search).get('scene')==='play'){
+ showScreen('screen-play');
+ $('#p-buzz').hidden=false;
+ $('#p-wait').hidden=true;
+ $('#pBuzzQ').textContent='Quel calendrier cache des chocolats avant Noël ?';
+ $('#pBuzzCat').textContent='La magie de Noël';
+ setChristmas(true);
+} else api.enterCreate('noel');
+</script></body></html>

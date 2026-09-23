@@ -19,6 +19,11 @@ service cloud.firestore {
         && request.resource.data.status == 'lobby' && request.resource.data.members == []
         && request.resource.data.format in ['emission','soiree','marathon']
         && request.resource.data.ton in ['mix','classique','moderne']
+        && request.resource.data.get('event', 'standard') in ['standard','noel']
+        && (request.resource.data.get('event', 'standard') != 'noel' || (
+          premium() && request.resource.data.ton == 'mix'
+          && request.resource.data.answerSeconds in [8,12,20]
+          && request.resource.data.roundSeconds in [30,45,60,90]))
         && request.resource.data.reponses in ['oral','clavier']
         && request.resource.data.maxJoueurs in [4,8]
         && (premium() || (request.resource.data.maxJoueurs == 4 && request.resource.data.format == 'emission' && request.resource.data.ton == 'mix'));
@@ -26,7 +31,10 @@ service cloud.firestore {
         (resource.data.hostUid == request.auth.uid
           && request.resource.data.hostUid == resource.data.hostUid
           && request.resource.data.maxJoueurs == resource.data.maxJoueurs
-          && request.resource.data.format == resource.data.format)
+          && request.resource.data.format == resource.data.format
+          && request.resource.data.get('event', 'standard') == resource.data.get('event', 'standard')
+          && request.resource.data.get('answerSeconds', 12) == resource.data.get('answerSeconds', 12)
+          && request.resource.data.get('roundSeconds', 40) == resource.data.get('roundSeconds', 40))
         || (resource.data.status in ['lobby','live']
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members'])
           && !(request.auth.uid in resource.data.members)

@@ -1,3 +1,4 @@
+import { setChristmas } from './christmas-scene.js';
 import { revealQuestion } from './question-text.js';
 /* Bibi Quizz — parcours du maître du jeu :
  * création → salon → plateau (écran partagé : télé, ordi) → podium de la soirée.
@@ -43,6 +44,7 @@ const later = (fn, ms) => { const t = setTimeout(fn, ms); S.timers.push(t); retu
 const every = (fn, ms) => { const t = setInterval(fn, ms); S.timers.push(t); return t; };
 
 export function leaveHost() {
+  setChristmas(false);
   S.unsubs.forEach(u => { try { u(); } catch {} });
   S.unsubs = [];
   clearTimers();
@@ -77,34 +79,38 @@ export function renderHistory() {
 }
 
 /* ═══════════════ CRÉATION ═══════════════ */
-const choix = { format: 'soiree', ton: 'mix', reponses: 'oral' };
+const choix = { format: 'soiree', ton: 'mix', reponses: 'oral', event: 'standard' };
 const oral = () => S.game?.reponses === 'oral';
-const secondesR2 = () => oral() ? 40 : RULES.SECONDES_R2;
+const secondesR2 = () => S.game?.event === 'noel' ? (S.game.roundSeconds || 45) : oral() ? 40 : RULES.SECONDES_R2;
+const secondesReponse = () => S.game?.event === 'noel' ? (S.game.answerSeconds || 12) : RULES.SECONDES_REPONSE;
 
-export function enterCreate() {
-  choix.format = isPremium() ? 'soiree' : 'emission'; choix.ton = 'mix'; choix.reponses = 'oral';
+export function enterCreate(requestedEvent = 'standard') {
+  choix.format = isPremium() ? 'soiree' : 'emission'; choix.ton = 'mix'; choix.reponses = 'oral'; choix.event = requestedEvent === 'noel' && isPremium() ? 'noel' : 'standard';
   $$('#createForm .choice-grid').forEach(grid => {
     const field = grid.dataset.field;
     $$('.choice', grid).forEach(c => {
       c.classList.toggle('is-on', c.dataset.value === choix[field]);
       c.querySelector('.choice-lock')?.remove();
-      if (['format', 'ton'].includes(field) && !guard(field, c.dataset.value).ok) c.append(el('span', { class: 'choice-lock' }, icon('lock')));
+      if (['format', 'ton', 'event'].includes(field) && !guard(field, c.dataset.value).ok) c.append(el('span', { class: 'choice-lock' }, icon('lock')));
     });
   });
   const r = planResume();
   $('#planBanner').hidden = isPremium();
   $('#planBannerTitle').textContent = r.titre;
   $('#planBannerLine').textContent = ' — ' + r.ligne;
+  updateEventPreview();
   showScreen('screen-create');
+  if (requestedEvent === 'noel' && !isPremium()) openPaywall(guard('event', 'noel').why);
 }
 
 $$('#createForm .choice-grid').forEach(grid => $$('.choice', grid).forEach(c => c.addEventListener('click', () => {
   const field = grid.dataset.field;
-  if (['format', 'ton'].includes(field)) {
+  if (['format', 'ton', 'event'].includes(field)) {
     const g = guard(field, c.dataset.value);
     if (!g.ok) { openPaywall(g.why); return; }
   }
   choix[field] = c.dataset.value;
+  if (field === 'event') { if (choix.event === 'noel') choix.ton = 'mix'; updateEventPreview(); }
   $$('.choice', grid).forEach(x => x.classList.toggle('is-on', x === c));
   sfx.tap();
 })));
@@ -114,7 +120,7 @@ $('#btnCreateGame')?.addEventListener('click', async () => {
   const btn = $('#btnCreateGame');
   btn.disabled = true;
   try {
-    const g = await createGame({ format: choix.format, ton: choix.ton, reponses: choix.reponses });
+    const g = await createGame({ ...choix, answerSeconds: Number($('#christmasAnswer').value), roundSeconds: Number($('#christmasRound').value) });
     sfx.good();
     location.hash = '#/host/' + g.code;
   } catch (e) {
@@ -134,7 +140,7 @@ export async function enterLobby(code) {
   try { game = await loadGame(code); } catch { game = null; }
   if (!game) { toast('Partie introuvable.', 'err'); forgetGame(code); location.hash = '#/'; return; }
   if (game.hostUid !== uid()) { location.hash = '#/j/' + code; return; }   // appareil invité : manette
-  S.code = code; S.game = game;
+  S.code = code; S.game = game; setChristmas(game.event === 'noel');
   S.seq = game.bc?.seq || 0;
   S.tour = 0;
   S.etat = game.etat || null;
@@ -167,7 +173,7 @@ export async function enterLobby(code) {
     else toast(await copy(url) ? 'Lien copié.' : url, 'ok');
   };
   const f = FORMATS[game.format] || FORMATS.soiree;
-  $('#lobbyFormat').textContent = `${f.label} · ${f.duree} · ton ${({ mix: 'mix', classique: 'classique', moderne: '100 % moderne' })[game.ton] || 'mix'}`;
+  $('#lobbyFormat').textContent = `${game.event === 'noel' ? '🎄 Quiz de Noël · ' : ''}${f.label} · ${f.duree} · ton ${({ mix: 'mix', classique: 'classique', moderne: '100 % moderne' })[game.ton] || 'mix'}`;
   publish({ phase: PHASE.ATTENTE });
   renderLobbyPlayers();
   showScreen('screen-lobby');
@@ -305,7 +311,7 @@ function header() {
   const e = E();
   $('#liveEmission').textContent = e.manche === 'finale' ? 'Grande Finale'
     : `Émission ${e.emission} / ${e.nbEmissions}`;
-  $('#liveManche').textContent = libelleManche(e.manche);
+  $('#liveManche').textContent = (S.game.event === 'noel' ? '🎄 Noël · ' : '') + libelleManche(e.manche);
   $('#btnCloreManche').hidden = e.manche !== 'r1';
 }
 
@@ -408,7 +414,7 @@ function startEmission(n) {
     sous: `${pluriel(N, 'candidat')} au buzzer. Premier à 9 points : qualifié !`,
     regles: [
       'La question s\'affiche au fil de l\'eau : buzzez dès que vous savez, même avant la fin.',
-      `Le premier qui buzze ${oral() ? "répond à voix haute" : "tape sa réponse"} (${RULES.SECONDES_REPONSE} s). Une erreur : il ne peut plus buzzer sur cette question.`,
+      `Le premier qui buzze ${oral() ? "répond à voix haute" : "tape sa réponse"} (${secondesReponse()} s). Une erreur : il ne peut plus buzzer sur cette question.`,
       'Une bonne réponse vaut 1 point, puis 2 points quand il ne reste que 3 candidats en lice, 3 points à 2.',
       r1Elimine(N) ? `Les ${cible} premiers à 9 points passent à la Rafale chrono, le dernier est éliminé.`
                    : `À ${N}, personne n'est éliminé : l'ordre d'arrivée décide qui choisit son thème en premier.`
@@ -436,7 +442,7 @@ function r1Next() {
   scene('#stR1');
   const enLice = e.inscrits.filter(u => !e.r1.qualifies.includes(u)).length;
   S.step.valeur = valeurR1(enLice);
-  $('#r1Cat').textContent = CATEGORIES[q.c]?.l || '';
+  $('#r1Cat').textContent = CATEGORIES[q.c]?.l || (q.c === 'noel' ? 'La magie de Noël' : '');
   $('#r1Valeur').textContent = pluriel(S.step.valeur, 'point');
   $('#r1Num').textContent = `Question ${e.r1.nq}`;
   $('#r1Rev').hidden = true;
@@ -457,7 +463,7 @@ function r1Lecture() {
   const draw = () => revealQuestion(txt, q.q, st.shown);
   draw();
   $('#r1Status').innerHTML = st.bloques.length ? `${iconHtml('bolt')} Le buzzer est rouvert !` : '';
-  publish({ phase: PHASE.R1_LECTURE, q: { texte: q.q, cat: CATEGORIES[q.c]?.l || '', depuis: st.shown, cps: RULES.LECTURE_CPS },
+  publish({ phase: PHASE.R1_LECTURE, q: { texte: q.q, cat: CATEGORIES[q.c]?.l || (q.c === 'noel' ? 'La magie de Noël' : ''), depuis: st.shown, cps: RULES.LECTURE_CPS },
             bloques: st.bloques, valeur: st.valeur, scores: E().r1.scores });
   const finLecture = () => {
     let reste = st.bloques.length ? 5 : RULES.SECONDES_APRES_LECTURE;
@@ -506,12 +512,12 @@ function r1Main(u) {
   sfx.buzz(joueurDe(u).son);
   renderDesks();
   flashDesk(u, 'pulse');
-  let reste = RULES.SECONDES_REPONSE;
+  let reste = secondesReponse();
   const q = byId[st.qid];
   revealQuestion($('#r1Texte'), q.q, st.shown);
   const tic = () => { $('#r1Status').innerHTML = `${pawn(joueurDe(u)).outerHTML} <strong>${esc(nomDe(u))}</strong> a buzzé ! Réponse dans <strong>${reste}</strong> s`; };
   tic();
-  publish({ phase: PHASE.R1_REPONSE, q: { texte: q.q, cat: CATEGORIES[q.c]?.l || '', depuis: st.shown, cps: 0 },
+  publish({ phase: PHASE.R1_REPONSE, q: { texte: q.q, cat: CATEGORIES[q.c]?.l || (q.c === 'noel' ? 'La magie de Noël' : ''), depuis: st.shown, cps: 0 },
             main: u, bloques: st.bloques, valeur: st.valeur, secondes: reste, scores: E().r1.scores });
   every(() => {
     reste -= 1; tic();
@@ -574,7 +580,7 @@ function r1Reveal(gain = null) {
   renderTentatives($('#r1Tentatives'), st, (u) => r1Accorder(u));
   renderDesks();
   persist();
-  publish({ phase: PHASE.R1_REVEAL, q: { texte: q.q, cat: CATEGORIES[q.c]?.l || '', depuis: q.q.length, cps: 0 },
+  publish({ phase: PHASE.R1_REVEAL, q: { texte: q.q, cat: CATEGORIES[q.c]?.l || (q.c === 'noel' ? 'La magie de Noël' : ''), depuis: q.q.length, cps: 0 },
             reponse: { r: q.r, uid: gain?.uid || null, texte: gain?.texte || null, pts: gain?.pts || 0, qualif: !!gain?.qualif },
             valeur: st.valeur, scores: e.r1.scores });
   setNext(r1Fini(e.r1, e.inscrits) ? 'Fin de la manche' : 'Question suivante', 'arrow-right');
@@ -970,7 +976,7 @@ function fafRepondre(u, rebond) {
   st.rebond = rebond;
   if (!rebond) sfx.buzz(joueurDe(u).son);
   renderFafDesks();
-  let reste = RULES.SECONDES_REPONSE;
+  let reste = secondesReponse();
   const tic = () => {
     $('#fafStatus').innerHTML = `${pawn(joueurDe(u)).outerHTML} <strong>${esc(nomDe(u))}</strong> ${rebond ? 'tente le rebond' : 'a buzzé'} ! Réponse dans <strong>${reste}</strong> s`;
   };
@@ -1173,7 +1179,7 @@ function showPodium(calme) {
 $('#btnReplay')?.addEventListener('click', async () => {
   let format = S.game.format;
   if (!guard('format', format).ok) format = 'emission';
-  const tirage = nouveauTirage(S.game.ton);
+  const tirage = nouveauTirage(S.game.ton, S.game.event);
   try {
     await patchGame(S.code, { status: 'lobby', format, tirage, etat: null });
     S.game = { ...S.game, status: 'lobby', format, tirage, etat: null };
@@ -1310,3 +1316,14 @@ function verdictOral(ok) {
 }
 $('#btnOralGood').addEventListener('click', () => verdictOral(true));
 $('#btnOralBad').addEventListener('click', () => verdictOral(false));
+
+function updateEventPreview() {
+  const active = choix.event === 'noel';
+  $('#christmasSettings').hidden = !active;
+  $('#createForm [data-value="emission"] .choice-hint').textContent = active ? '≈ 30 min · les 3 manches de Noël' : 'Découverte gratuite · les 3 manches';
+  $('#createForm [data-value="oral"] .choice-hint').textContent = active ? 'Réponses à voix haute, validées par l’animateur. Chronos réglables ci-dessus.' : 'Buzzer sur téléphone, réponses à voix haute. Un animateur valide. Rafale chrono : 40 s.';
+  $('#createForm [data-value="clavier"] .choice-hint').textContent = active ? 'Réponses tapées, correction automatique. Chronos réglables ci-dessus.' : 'Réponses tapées, correction automatique. Rafale chrono : 60 s pour écrire.';
+  $('#toneChoices').closest('.card').hidden = active;
+  $$('#toneChoices .choice').forEach(c => c.classList.toggle('is-on', c.dataset.value === choix.ton));
+  setChristmas(active);
+}

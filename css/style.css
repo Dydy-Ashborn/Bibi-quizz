@@ -573,3 +573,90 @@ body{background:radial-gradient(ellipse at 80% 0%,#1859bc 0%,#03206b 48%,#021447
 #installHelp{margin:auto;width:min(440px,calc(100% - 32px));padding:28px;border:1px solid var(--bord);border-radius:24px;background:var(--surface);color:var(--blanc);box-shadow:0 24px 80px #0008}
 #installHelp::backdrop{background:#101728bb;backdrop-filter:blur(4px)}
 #installHelp h2{margin-bottom:18px}#installHelp p{line-height:1.6;color:var(--gris);margin:14px 0}#installHelp form{margin-top:22px}
+
+/* iPhone : une seule hauteur visible, safe areas incluses dans le plateau. */
+:root{--app-height:100dvh}
+body{padding-bottom:0}
+.screen{min-height:var(--app-height);padding-top:env(safe-area-inset-top)}
+#screen-play,#screen-live{padding-top:0}
+.play,.tv{min-height:var(--app-height);padding-top:max(12px,env(safe-area-inset-top));padding-bottom:max(16px,env(safe-area-inset-bottom))}
+body:has(#screen-play.is-active)>.install-bar,body:has(#screen-live.is-active)>.install-bar,
+body:has(#screen-play.is-active)>.legal-links,body:has(#screen-live.is-active)>.legal-links{display:none}
+.mute-btn{bottom:max(12px,env(safe-area-inset-bottom))}
+.modal{padding-top:max(16px,env(safe-area-inset-top));padding-bottom:max(16px,env(safe-area-inset-bottom))}
+.modal-box{max-height:calc(var(--app-height) - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 32px);overflow-y:auto;overscroll-behavior:contain}
+@media(max-width:640px){
+  .wrap{padding-bottom:36px}.center-stack{padding-top:2vh}
+  .play-head{padding-bottom:8px}.play-body>div{gap:10px}
+  .buzzer{--size:min(60vw,32dvh,250px)}
+  .p-question{font-size:clamp(17px,4.8vw,20px)}.p-wait-icon{width:72px;height:72px;font-size:32px}
+  .tv{padding-left:12px;padding-right:12px;gap:10px}.tv-head{flex-wrap:wrap}.tv-foot{flex-wrap:wrap;padding-left:0}
+  .tv-foot .oral-controls{flex:1 1 100%}.tv-foot>.btn{margin-left:auto}
+  .qpanel{padding:20px}.qpanel-texte{font-size:24px}.desk{min-width:90px}.desk-score{font-size:30px}
+  .install-bar{padding-bottom:max(12px,env(safe-area-inset-bottom))}
+}
+
+/* Noël : boule à neige, Père Noël vectoriel et cadeaux en perspective. */
+.christmas-banner{display:grid;grid-template-columns:1.25fr 1fr;align-items:center;gap:26px;margin:38px 0 10px;padding:36px;border:1px solid #ffda7955;border-radius:26px;background:radial-gradient(ellipse at 85% 20%,#b23c5540,transparent 60%),linear-gradient(135deg,#163e38,#101f32);overflow:hidden}
+.christmas-banner .eyebrow{font-size:10px;letter-spacing:.16em;color:#ffda79}
+.christmas-banner h2{font-size:clamp(28px,3vw,40px);line-height:1.1;margin:12px 0}
+.christmas-banner p:not(.eyebrow){color:#c0d8d2;font-size:15px;line-height:1.6;margin-bottom:20px}
+.christmas-globe{width:240px;height:240px;margin:auto;position:relative;border:1px solid #fff6;border-radius:50%;background:radial-gradient(circle at 30% 20%,#ffffff35,transparent 35%),radial-gradient(ellipse at 50% 110%,#99cfc788,#1e3b4c55 65%);box-shadow:inset -14px -10px 30px #06111c66,inset 4px 6px 16px #fff3,0 25px 50px #0005;perspective:650px;transform-style:preserve-3d;animation:globeFloat 6s ease-in-out infinite}
+.santa{position:absolute;left:40px;bottom:18px;width:160px;filter:drop-shadow(0 8px 8px #0004);transform:translateZ(30px);animation:santaWave 5s ease-in-out infinite}
+.santa svg{width:100%;display:block}.globe-stars{position:absolute;top:25px;left:42px;color:#ffda79;font-size:28px;letter-spacing:8px;animation:twinkle 4s ease-in-out infinite}
+.globe-base{position:absolute;left:32px;right:32px;height:26px;bottom:-7px;border-radius:50%;background:linear-gradient(#f6d782,#a77435);box-shadow:0 8px 0 #76502b,0 18px 20px #0004}
+.gift{position:absolute;font-size:42px;bottom:18px;filter:drop-shadow(0 5px 3px #0006);animation:giftOrbit 7s ease-in-out infinite;transform-style:preserve-3d}.gift-one{left:12px}.gift-two{right:8px;animation-delay:-3s}
+.christmas-picker{border-color:#ffda7970}.christmas-timers{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:18px}
+.christmas-timers label{font-size:13px;font-weight:700;color:var(--glace)}
+.christmas-timers select{display:block;width:100%;padding:12px;margin-top:8px;background:#102d3c;color:#fff;border:1px solid #93c2b8;border-radius:10px;font:inherit;font-size:16px}
+body.is-christmas::before{background:radial-gradient(ellipse at 15% 0%,#476352,#102e2d 48%,#081c28)}
+.is-christmas .qpanel,.is-christmas .modal-box{background:linear-gradient(135deg,#234f46,#112c32)}
+.is-christmas .logo-quizz{color:#ffda79}.is-christmas .decor{opacity:.25}
+#christmasSnow{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:2}
+#christmasEffects{position:fixed;right:12px;bottom:max(12px,env(safe-area-inset-bottom));z-index:35;padding:9px 12px;border:1px solid #9bc4b9;border-radius:999px;background:#102c2deb;color:#d8eee8;font:600 12px var(--font);cursor:pointer}
+body:has(#screen-play.is-active) #christmasEffects{font-size:10px;padding:8px 10px}
+@keyframes globeFloat{50%{transform:translateY(-8px) rotateY(8deg)}}
+@keyframes santaWave{50%{transform:translateZ(35px) rotate(-5deg)}}
+@keyframes giftOrbit{50%{transform:translateY(-16px) translateZ(35px) rotateY(28deg) rotate(-8deg)}}
+@keyframes twinkle{50%{opacity:.45;transform:scale(.92)}}
+@media(max-width:640px){.christmas-banner{grid-template-columns:1fr;padding:25px;gap:24px}.christmas-globe{width:210px;height:210px;margin-bottom:14px}.santa{left:25px}.christmas-timers{grid-template-columns:1fr}.christmas-banner .btn{font-size:14px}}
+.christmas-still .christmas-globe,.christmas-still .santa,.christmas-still .gift,.christmas-still .globe-stars{animation:none}
+@media(prefers-reduced-motion:reduce){.christmas-globe,.santa,.gift,.globe-stars{animation:none!important}.beam,.decor-floor{animation:none!important}}
+.gift{width:34px;height:34px;font-size:0;transform:rotateX(-16deg) rotateY(-24deg)}
+.gift-face{position:absolute;inset:0;border:1px solid #ffffff30;background:linear-gradient(90deg,transparent 40%,#ffdc81 40% 60%,transparent 60%),linear-gradient(#e36472,#a52e4b);backface-visibility:hidden}
+.gift-face.front{transform:translateZ(17px)}.gift-face.back{transform:rotateY(180deg) translateZ(17px)}
+.gift-face.left{transform:rotateY(-90deg) translateZ(17px)}.gift-face.right{transform:rotateY(90deg) translateZ(17px)}
+.gift-face.top{transform:rotateX(90deg) translateZ(17px)}.gift-face.bottom{transform:rotateX(-90deg) translateZ(17px)}
+.gift-two .gift-face{background:linear-gradient(90deg,transparent 40%,#ffdc81 40% 60%,transparent 60%),linear-gradient(#468f75,#214e43)}
+#christmasFlyover{position:fixed;top:max(20px,env(safe-area-inset-top));left:-180px;pointer-events:none;z-index:0;display:flex;align-items:center;animation:santaFlight 26s linear infinite;filter:drop-shadow(0 0 15px #ffda7940)}
+.flying-santa{display:block;width:85px;transform:rotate(12deg)}.flying-santa svg{display:block;width:100%}.sleigh{color:#ffda79;font-size:24px;letter-spacing:10px;white-space:nowrap}
+@keyframes santaFlight{0%,15%{transform:translateX(-200px) translateY(0)}75%,100%{transform:translateX(calc(100vw + 400px)) translateY(70px)}}
+@media(prefers-reduced-motion:reduce){#christmasFlyover{display:none!important}}
+@media(max-height:600px) and (max-width:900px){.play-head{padding-top:0}.buzzer{--size:min(40vw,32dvh,180px)}.play-body>div{gap:6px}.p-question{font-size:17px}.p-wait-icon{width:54px;height:54px;font-size:25px}}
+
+/* Édition de Noël : habillage du site, indépendant de la partie. */
+.theme-switch{border:1px solid #ffffff50;background:#ffffff0d;color:var(--blanc);border-radius:99px;padding:10px 16px;font:700 13px var(--font);cursor:pointer}
+body:not(.theme-noel) .christmas-banner,body:not(.theme-noel) .christmas-picker{display:none}
+.is-christmas{--nuit:#071f17;--bleu-900:#103f2b;--bleu-800:#135236;--bleu-700:#286341;--bleu-600:#23754b;--bleu-500:#349861;--ciel:#91dfad;--glace:#e3f6e6;--gris:#bad7c3;--surface:#123b2a;--bord:#9ed1ad50;--or:#ffd779;--orange:#d43640;--accent-shadow:#821c2c;--accent-ink:#3e1017}
+body.is-christmas,body.is-christmas:has(#screen-home.is-active)::before,body.is-christmas::before{background:radial-gradient(ellipse at 95% 0%,#8a213b90,transparent 55%),radial-gradient(ellipse at 0% 45%,#23633d80,transparent 70%),linear-gradient(125deg,#062b1c,#10261e 65%,#301521)}
+.is-christmas .card,.is-christmas .home-join-strip,.is-christmas .hero-stage,.is-christmas .mini-desk,.is-christmas .demo-card,.is-christmas .podium,.is-christmas .oral-controls{background:linear-gradient(135deg,#24543d,#102d22);border-color:#d9b87866}
+.is-christmas .btn-gold,.is-christmas .btn-blue{background:linear-gradient(#f16865,#c9283b);color:#fff6e9;box-shadow:0 6px 0 #791a2a,0 12px 28px #a3193433}
+.is-christmas .hero-copy h1 em,.is-christmas .wordmark span{color:#ffb1a6}
+.is-christmas .choice.is-on{background:#24583e;border-color:#f3ce83}
+.is-christmas .input,.is-christmas select{background:#0b2d21;border-color:#87b79b;color:#fff}
+.is-christmas .christmas-banner{position:relative;min-height:330px;margin:24px 0;padding:38px 48px;background:radial-gradient(ellipse at 85% 30%,#da64693b,transparent 50%),linear-gradient(115deg,#721a2c,#a12b3e 48%,#14482f);border:1px solid #ffd591;box-shadow:0 20px 65px #0004,inset 0 1px #fff4}
+.christmas-banner::before{content:'';position:absolute;inset:0 0 auto;height:9px;background:repeating-linear-gradient(110deg,#fff4d9 0 15px,#cb3443 15px 30px,#fff4d9 30px 45px,#21864d 45px 60px);background-size:140% 100%;animation:christmasRibbon 8s linear infinite}
+.christmas-banner h2{font-size:clamp(40px,5vw,68px);text-shadow:0 3px 0 #641526}
+.christmas-banner .eyebrow{letter-spacing:.12em;color:#ffe1a2}
+.christmas-banner p:not(.eyebrow){color:#ffede3;max-width:450px}
+.is-christmas .christmas-banner .btn{background:linear-gradient(#f8e3a4,#eabc5d);color:#481e1c;box-shadow:0 5px 0 #9b6332}
+#christmasFlyover{top:36%;left:0;width:clamp(300px,44vw,620px);z-index:30;animation:santaFlight 22s linear infinite;filter:drop-shadow(0 15px 12px #0005)}
+.santa-sleigh{display:block;width:100%;height:auto;animation:sleighBob 1.6s ease-in-out infinite}
+.reindeer{animation:reindeerGallop .7s ease-in-out infinite;transform-origin:440px 95px}
+@keyframes santaFlight{0%{transform:translateX(-110%) rotate(-7deg)}45%,100%{transform:translateX(calc(100vw + 100%)) rotate(-7deg)}}
+@keyframes sleighBob{50%{transform:translateY(-14px) rotate(2deg)}}
+@keyframes reindeerGallop{50%{transform:rotate(-7deg)}}
+@keyframes christmasRibbon{to{background-position:140% 0}}
+.christmas-still .christmas-banner::before,.christmas-still .santa-sleigh,.christmas-still .reindeer{animation:none}
+@media(max-width:640px){.home-nav{gap:8px;flex-wrap:wrap;height:auto;min-height:82px;padding:14px 0}.theme-switch{font-size:11px;padding:8px 10px}.is-christmas .christmas-banner{padding:28px 23px;gap:12px}.christmas-banner h2{font-size:43px}.christmas-globe{width:190px;height:190px}.christmas-banner .eyebrow{font-size:9px}.is-christmas .christmas-banner .santa{width:125px;left:30px}.is-christmas .christmas-banner .globe-base{bottom:-10px}}
+@media(prefers-reduced-motion:reduce){.christmas-banner::before,.santa-sleigh,.reindeer{animation:none!important}}

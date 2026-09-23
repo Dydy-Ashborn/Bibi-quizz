@@ -1,3 +1,4 @@
+import { eventOptions } from './event-config.js';
 /* Bibi Quizz — couche d'accès Firestore. Aucun composant UI ici.
  * Modèle :
  *   games/{code}                  config + tirage + état de reprise + broadcast — écrit par l'hôte seul
@@ -47,12 +48,15 @@ export function markUsed(ids) {
 /* ── Création / lecture ────────────────────────────────────────────────── */
 
 /** Nouveau tirage pour une soirée (création ou « rejouer »). */
-export function nouveauTirage(ton) {
-  return tirerSoiree({ ton, exclude: usedQuestions(), pools: pools() });
+export function nouveauTirage(ton, event = 'standard') {
+  return tirerSoiree({ ton: event === 'noel' ? 'mix' : ton, exclude: usedQuestions(), pools: pools(event) });
 }
 
 /** @param {{format:string, ton:string}} cfg */
 export async function createGame(cfg) {
+  const options = eventOptions(cfg);
+  const eventAccess = guard('event', options.event);
+  if (!eventAccess.ok) throw new Error(eventAccess.why);
   for (const feature of ['format','ton']) {
     const access = guard(feature, cfg[feature]);
     if (!access.ok) throw new Error(access.why);
@@ -65,11 +69,12 @@ export async function createGame(cfg) {
   }
   const data = {
     code, hostUid: uid(), createdAt: serverTimestamp(),
+    ...options,
     status: 'lobby', format: cfg.format, ton: cfg.ton, reponses: cfg.reponses || 'oral',
     // Figé à la création depuis le plan de l'HÔTE : c'est lui qui paie, les invités
     // en profitent. Relire le plan chez l'invité donnerait la limite gratuite à tous.
     maxJoueurs: maxJoueurs(),
-    tirage: nouveauTirage(cfg.ton),
+    tirage: nouveauTirage(cfg.ton, options.event),
     members: [],
     etat: null,
     bc: null

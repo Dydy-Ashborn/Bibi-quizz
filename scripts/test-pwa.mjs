@@ -16,7 +16,7 @@ const context={
  URL,Response,location:{origin:'https://bibi.test'},
  self:{addEventListener:(name,fn)=>handlers[name]=fn,skipWaiting:async()=>{},clients:{claim:async()=>{}}},
  caches:{open:async()=>cache,match:async req=>storage.get(typeof req==='string'?req:req.url),
- keys:async()=>['another-app-cache','bibi-quizz-v1','bibi-quizz-v8'],delete:async key=>deleted.push(key)},
+ keys:async()=>['another-app-cache','bibi-quizz-v1','bibi-quizz-v10'],delete:async key=>deleted.push(key)},
  fetch:async()=>{if(!online)throw Error('offline');return {ok:true,clone:()=>({})};}
 };
 vm.runInNewContext(fs.readFileSync('sw.js','utf8'),context);
