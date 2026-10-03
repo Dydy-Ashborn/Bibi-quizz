@@ -7,7 +7,7 @@
  * On ne touche qu'aux GET de notre origine : intercepter le SDK Firebase lui ferait
  * recevoir index.html à la place d'un module (« MIME type text/html »).
  */
-const VERSION = 'v11';
+const VERSION = 'v12';
 const CACHE   = 'bibi-quizz-' + VERSION;
 
 const SHELL = [

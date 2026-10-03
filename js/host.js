@@ -260,6 +260,7 @@ function publish(fields) {
   $('#oralAlternatives').hidden = !alternatives.length;
 
   const bc = broadcast({
+    at: (S.game?.bc?.at || 0) + 1,
     seq: S.seq, tour: S.tour, reponses: S.game?.reponses || 'clavier',
     emission: e?.emission || 1, nbEmissions: e?.nbEmissions || nbEmissions(S.game?.format),
     manche: e?.manche || null,
@@ -463,8 +464,11 @@ function r1Lecture() {
   const draw = () => revealQuestion(txt, q.q, st.shown);
   draw();
   $('#r1Status').innerHTML = st.bloques.length ? `${iconHtml('bolt')} Le buzzer est rouvert !` : '';
-  publish({ phase: PHASE.R1_LECTURE, q: { texte: q.q, cat: CATEGORIES[q.c]?.l || (q.c === 'noel' ? 'La magie de Noël' : ''), depuis: st.shown, cps: RULES.LECTURE_CPS },
+  const checkpoint = () => publish({ phase: PHASE.R1_LECTURE, q: { texte: q.q, cat: CATEGORIES[q.c]?.l || (q.c === 'noel' ? 'La magie de Noël' : ''), depuis: st.shown, cps: RULES.LECTURE_CPS },
             bloques: st.bloques, valeur: st.valeur, scores: E().r1.scores });
+  checkpoint();
+  let lastCheckpoint = performance.now();
+  const began = lastCheckpoint, initialShown = st.shown;
   const finLecture = () => {
     let reste = st.bloques.length ? 5 : RULES.SECONDES_APRES_LECTURE;
     const tic = () => { $('#r1Status').innerHTML = `${iconHtml('stopwatch')} Encore <strong>${reste}</strong> s pour buzzer`; };
@@ -473,8 +477,9 @@ function r1Lecture() {
   };
   if (st.shown >= q.q.length) { finLecture(); return; }
   const pas = every(() => {
-    st.shown = Math.min(q.q.length, st.shown + 1);
+    st.shown = Math.min(q.q.length, initialShown + Math.floor((performance.now() - began) * RULES.LECTURE_CPS / 1000));
     draw();
+    if (performance.now() - lastCheckpoint >= 1000 || st.shown >= q.q.length) { lastCheckpoint = performance.now(); checkpoint(); }
     if (st.shown >= q.q.length) { clearInterval(pas); finLecture(); }
   }, 1000 / RULES.LECTURE_CPS);
   onBuzz();   // des buzz ont pu arriver pendant la relance

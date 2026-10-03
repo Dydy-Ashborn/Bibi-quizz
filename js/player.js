@@ -3,15 +3,15 @@ import { revealQuestion } from './question-text.js';
 /* Bibi Quizz — manette téléphone : rejoindre → buzzer / taper / choisir → résultats.
  *
  * Le téléphone ne décide rien : il affiche le broadcast de l'écran maître (live.js)
- * et renvoie buzz et saisies. Toutes les durées sont des chronos LOCAUX démarrés à
- * réception : on ne compare jamais les horloges des appareils.
+ * et renvoie buzz et saisies. La lecture suit les points de synchronisation du maître
+ * avec une horloge locale monotone, sans comparer les horloges des appareils.
  */
 import { $, $$, el, icon, iconHtml, esc, showScreen, toast, sfx, burst, initiale, ls, vibre,
          listeNoms, pluriel } from './util.js';
 import { COULEURS, BUZZERS, RULES } from './config.js';
 import { uid } from './firebase.js';
 import { loadGame, watchGame, watchPlayers, watchMyPlayer, joinGame, myPlayer, sendBuzz, sendInput } from './store.js';
-import { PHASE, INPUT, peutBuzzer, retraitConfirme } from './live.js';
+import { PHASE, INPUT, peutBuzzer, retraitConfirme, nouveauBroadcast, lettresRevelees } from './live.js';
 import { juger } from './game.js';
 import { themeById } from './data/questions.js';
 
@@ -29,7 +29,7 @@ export function leavePlayer() {
   P.unsubs.forEach(u => { try { u(); } catch {} });
   P.unsubs = [];
   stopTimer(); stopTypo();
-  P.bc = null; P.vueCle = null;
+  P.bc = null; P.vueCle = null; P.buzzKey = null; P.envoye = null;
 }
 function stopTimer() { if (P.timer) { clearInterval(P.timer); P.timer = null; } }
 function stopTypo() { if (P.typo) { clearInterval(P.typo); P.typo = null; } }
@@ -124,9 +124,15 @@ function enterPlay() {
       location.hash = '#/';
     }
   }));
-  P.unsubs.push(watchGame(P.code, (g, error, metadata) => {
+  let unwatch = null, retry = null, refreshing = false;
+  const receive = (g, error, metadata) => {
     if (!active()) return;
-    if (error) { toast('Connexion interrompue. Reconnexion en cours…', 'info'); return; }
+    if (error) {
+      status('Connexion interrompue — reconnexion…');
+      clearTimeout(retry);
+      retry = setTimeout(subscribe, 2000);
+      return;
+    }
     if (!g) {
       if (retraitConfirme(false, metadata)) {
         leavePlayer(); toast('La partie a été supprimée.', 'err'); location.hash = '#/';
@@ -134,10 +140,43 @@ function enterPlay() {
       return;
     }
     setChristmas(g.event === 'noel');
-    // Le doc de partie change aussi à chaque sauvegarde de l'état de reprise : on ne
-    // redessine que sur un NOUVEAU broadcast, sinon la saisie en cours serait effacée.
-    if (g.bc && (!P.bc || g.bc.at !== P.bc.at || g.bc.seq !== P.bc.seq)) render(g.bc);
-  }));
+    if (!nouveauBroadcast(g.bc, P.bc)) return;
+    const previous = P.bc, previousView = P.vueCle;
+    try { render(g.bc); }
+    catch (e) {
+      // Un rendu interrompu doit pouvoir être retenté au prochain instantané.
+      P.bc = previous; P.vueCle = previousView;
+      console.warn('[bibi-quizz] rendu joueur', e);
+      status('Synchronisation en cours…');
+    }
+  };
+  const subscribe = () => {
+    if (!active()) return;
+    unwatch?.();
+    unwatch = watchGame(P.code, receive);
+  };
+  const refresh = async () => {
+    if (!active() || refreshing || document.hidden) return;
+    refreshing = true;
+    try {
+      const g = await loadGame(P.code, { server: true });
+      if (active()) receive(g, null, { fromCache: false, hasPendingWrites: false });
+    } catch { if (active()) status('Connexion interrompue — reconnexion…'); }
+    finally { refreshing = false; }
+  };
+  const resume = () => { if (!document.hidden) refresh(); };
+  subscribe();
+  // Filet de sécurité si le flux reste muet : lecture serveur, jamais le cache local.
+  const watchdog = setInterval(refresh, 10000);
+  document.addEventListener('visibilitychange', resume);
+  window.addEventListener('pageshow', resume);
+  window.addEventListener('online', resume);
+  P.unsubs.push(() => {
+    unwatch?.(); clearTimeout(retry); clearInterval(watchdog);
+    document.removeEventListener('visibilitychange', resume);
+    window.removeEventListener('pageshow', resume);
+    window.removeEventListener('online', resume);
+  });
 }
 
 function pawn(p) {
@@ -183,6 +222,9 @@ function chrono(node, secondes, fin) {
 function render(bc) {
   const prev = P.bc;
   P.bc = bc;
+  if (!prev || prev.seq !== bc.seq) {
+    stopTimer(); stopTypo(); P.buzzKey = null; P.envoye = null;
+  }
   const me = moi();
   const inscrit = bc.inscrits.includes(me);
   const cle = `${bc.phase}|${bc.seq}|${bc.tour}`;
@@ -294,7 +336,7 @@ function renderR1(bc, nouvelle, inscrit) {
   $('#pBuzzIndices').hidden = true;
   $('#pBuzzCat').textContent = [bc.q?.cat, bc.valeur ? pluriel(bc.valeur, 'point') : ''].filter(Boolean).join(' · ');
   if (bc.phase === PHASE.R1_LECTURE) {
-    if (nouvelle) typewriter(texte, bc.q.depuis, bc.q.cps);
+    typewriter(texte, bc.q.depuis, bc.q.cps, !nouvelle);
   } else {
     stopTypo();
     revealQuestion($('#pBuzzQ'), texte, bc.q.depuis);
@@ -315,14 +357,19 @@ function renderR1(bc, nouvelle, inscrit) {
 }
 
 /** Affichage progressif local de la question (même vitesse que l'écran maître). */
-function typewriter(texte, depuis, cps) {
+function typewriter(texte, depuis, cps, preserve = false) {
   stopTypo();
   const node = $('#pBuzzQ');
-  let n = depuis || 0;
-  const draw = () => revealQuestion(node, texte, n);
+  if (preserve) depuis = Math.max(depuis || 0, (node.getAttribute('aria-label') || '').length);
+  const start = performance.now();
+  const draw = () => {
+    const n = lettresRevelees(texte.length, depuis, cps, performance.now() - start);
+    revealQuestion(node, texte, n);
+    if (n >= texte.length) stopTypo();
+  };
   draw();
-  if (!cps || n >= texte.length) return;
-  P.typo = setInterval(() => { n += 1; draw(); if (n >= texte.length) stopTypo(); }, 1000 / cps);
+  if (!cps || depuis >= texte.length) return;
+  P.typo = setInterval(draw, Math.max(16, 1000 / cps));
 }
 
 /* Le buzzer : pointerdown (pas click) pour gagner les ~100 ms du tap. La saisie
@@ -342,7 +389,7 @@ $('#btnBuzz')?.addEventListener('pointerdown', e => {
   });
   stopTypo();
   const faf = bc.phase === PHASE.FAF_INDICES;
-  ouvrirSaisie({ titre: 'Buzz ! Tape ta réponse', question: faf ? null : $('#pBuzzQ').textContent,
+  ouvrirSaisie({ titre: 'Buzz ! Tape ta réponse', question: faf ? null : $('#pBuzzQ').getAttribute('aria-label'),
                  indices: faf ? bc.faf.indices : null, secondes: 0, kind: faf ? 'faf' : 'r1', garder: false });
 });
 

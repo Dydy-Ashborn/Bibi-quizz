@@ -8,7 +8,7 @@ import { eventOptions } from './event-config.js';
  *   hosts/{uid}                   { premium } — écrit par le webhook Stripe seul
  */
 import {
-  doc, collection, setDoc, updateDoc, getDoc, getDocs, onSnapshot,
+  doc, collection, setDoc, updateDoc, getDoc, getDocFromServer, getDocs, onSnapshot,
   serverTimestamp, deleteDoc, runTransaction, writeBatch, arrayRemove
 } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js';
 import { db, uid } from './firebase.js';
@@ -87,8 +87,8 @@ export async function createGame(cfg) {
   return data;
 }
 
-export async function loadGame(code) {
-  const snap = await getDoc(gameRef(code));
+export async function loadGame(code, { server = false } = {}) {
+  const snap = await (server ? getDocFromServer : getDoc)(gameRef(code));
   return snap.exists() ? snap.data() : null;
 }
 

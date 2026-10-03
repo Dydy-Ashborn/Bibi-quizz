@@ -39,8 +39,11 @@ function propre(v) {
   return JSON.parse(JSON.stringify(v, (k, x) => (x === undefined ? null : x)));
 }
 
+let lastBroadcastAt = 0;
+
 /** Construit un broadcast complet (valeurs par défaut + champs de la phase). */
 export function broadcast(fields) {
+  lastBroadcastAt = Math.max(Date.now(), lastBroadcastAt + 1, Number(fields.at) || 0);
   return propre({
     seq: 0, tour: 0, phase: PHASE.ATTENTE,
     emission: 1, nbEmissions: 1, manche: null,
@@ -49,7 +52,7 @@ export function broadcast(fields) {
     carton: null, q: null, main: null, bloques: [], valeur: 0,
     reponse: null, r2: null, faf: null, fin: null,
     ...fields,
-    at: Date.now()
+    at: lastBroadcastAt
   });
 }
 
@@ -67,4 +70,19 @@ export function peutBuzzer(bc, moi) {
 /** Un instantané local vide n'est jamais la preuve d'une exclusion. */
 export function retraitConfirme(exists, metadata) {
   return exists === false && metadata?.fromCache === false && metadata?.hasPendingWrites === false;
+}
+
+/** Écarte un doublon ou un ancien état reçu après une reconnexion/lecture serveur. */
+export function nouveauBroadcast(next, prev) {
+  if (!next) return false;
+  if (!prev) return true;
+  if (next.seq !== prev.seq) return next.seq > prev.seq;
+  if (next.tour !== prev.tour) return next.tour > prev.tour;
+  if (next.at !== prev.at) return next.at > prev.at;
+  return next.phase !== prev.phase;
+}
+
+/** Une minuterie retardée rattrape le temps écoulé au lieu de perdre des lettres. */
+export function lettresRevelees(length, depuis, cps, elapsedMs) {
+  return Math.min(length, Math.max(0, depuis || 0) + Math.floor(Math.max(0, elapsedMs) * Math.max(0, cps || 0) / 1000));
 }
